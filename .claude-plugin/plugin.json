@@ -1,0 +1,11 @@
+{
+  "name": "insights-ui",
+  "version": "1.0.0",
+  "description": "Beautiful dark-themed dashboard UI for Claude Code insights reports. Transforms raw usage data into stunning visual analytics with charts, metrics, and actionable recommendations.",
+  "author": {
+    "name": "Jung-wan Kim",
+    "url": "https://github.com/jung-wankim"
+  },
+  "license": "MIT",
+  "keywords": ["insights", "dashboard", "analytics", "visualization", "claude-code"]
+}

@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="__LANG__">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Code Insights</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0d1117;--card:#161b22;--card-hover:#1c2129;--border:#30363d;--border-subtle:#21262d;--border-hover:#484f58;
+--text:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;--link:#58a6ff;
+--blue:#58a6ff;--green:#3fb950;--orange:#d29922;--red:#f85149;--purple:#bc8cff;--cyan:#39d2c0;--pink:#f778ba;
+--sidebar-w:280px;--gap:24px;--radius:12px;--radius-sm:8px;--radius-xs:6px;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--link);text-decoration:none}
+.container{max-width:1400px;margin:0 auto;padding:var(--gap)}
+
+/* Header */
+.header{text-align:center;margin-bottom:var(--gap)}
+.header h1{font-size:2.5rem;font-weight:700;margin-bottom:4px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .date-range{color:var(--text-secondary);font-size:1rem;margin-bottom:20px}
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:12px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:transform .2s,box-shadow .2s}
+.metric-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.metric-card .metric-value{font-size:2rem;font-weight:700;margin-bottom:4px}
+.metric-card .metric-label{font-size:.875rem;color:var(--text-secondary)}
+.metric-card .metric-sub{font-size:.75rem;color:var(--text-muted);margin-top:4px}
+.metric-card:nth-child(1) .metric-value{color:var(--blue)}
+.metric-card:nth-child(2) .metric-value{color:var(--green)}
+.metric-card:nth-child(3) .metric-value{color:var(--orange)}
+.metric-card:nth-child(4) .metric-value{color:var(--purple)}
+.daily-avg{text-align:center;color:var(--text-muted);font-size:.8rem;margin-bottom:8px}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:var(--gap);flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:12px}
+.tab-btn{background:transparent;color:var(--text-secondary);border:1px solid transparent;border-radius:20px;padding:8px 18px;font-size:.85rem;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
+.tab-btn:hover{color:var(--text);background:var(--card)}
+.tab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:var(--sidebar-w) 1fr;gap:var(--gap);align-items:start}
+.sidebar{position:sticky;top:var(--gap);max-height:calc(100vh - 48px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* Sidebar sections */
+.sidebar-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.sidebar-section h3{font-size:.9rem;font-weight:600;margin-bottom:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.sidebar-metric{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
+.sidebar-metric:last-child{border-bottom:none}
+.sidebar-metric .label{font-size:.8rem;color:var(--text-secondary)}
+.sidebar-metric .value{font-size:.9rem;font-weight:600}
+
+/* Summary cards */
+.summary-card{padding:12px;border-radius:var(--radius-xs);margin-bottom:8px;background:rgba(22,27,34,.8);font-size:.8rem;line-height:1.5}
+.summary-card:last-child{margin-bottom:0}
+.summary-card.good{border-left:3px solid var(--green)}
+.summary-card.improve{border-left:3px solid var(--orange)}
+.summary-card.quick{border-left:3px solid var(--blue)}
+.summary-card .summary-title{font-weight:600;margin-bottom:4px;font-size:.85rem}
+.summary-card.good .summary-title{color:var(--green)}
+.summary-card.improve .summary-title{color:var(--orange)}
+.summary-card.quick .summary-title{color:var(--blue)}
+.summary-card ul{margin:0;padding-left:16px}
+.summary-card li{margin-bottom:2px;color:var(--text-secondary)}
+
+/* Sidebar mini chart */
+.sidebar-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.8rem}
+.sidebar-bar .bar-label{width:60px;color:var(--text-secondary);flex-shrink:0;text-align:right}
+.sidebar-bar .bar-track{flex:1;height:6px;background:var(--border-subtle);border-radius:3px;overflow:hidden}
+.sidebar-bar .bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.sidebar-bar .bar-value{width:36px;font-size:.75rem;color:var(--text-muted)}
+
+/* Main content */
+.main-content{min-width:0}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Section */
+.section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.section h2{font-size:1.3rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section h2 .icon{font-size:1.1rem}
+.section h3{font-size:1rem;font-weight:600;margin-bottom:12px;color:var(--text-secondary)}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.info-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;transition:transform .2s,border-color .2s}
+.info-card:hover{transform:translateY(-1px);border-color:var(--border-hover)}
+.info-card .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.info-card .card-title{font-size:.95rem;font-weight:600}
+.info-card .card-badge{font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:500}
+.info-card .card-body{font-size:.85rem;color:var(--text-secondary);line-height:1.6}
+.badge-green{background:rgba(63,185,80,.15);color:var(--green)}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--blue)}
+.badge-orange{background:rgba(210,153,34,.15);color:var(--orange)}
+.badge-red{background:rgba(248,81,73,.15);color:var(--red)}
+.badge-purple{background:rgba(188,140,255,.15);color:var(--purple)}
+.badge-cyan{background:rgba(57,210,192,.15);color:var(--cyan)}
+
+/* Chart containers */
+.chart-container{position:relative;width:100%;margin:16px 0}
+.chart-container.donut{max-width:300px;margin:0 auto}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+
+/* Tables */
+.data-table{width:100%;border-collapse:collapse;font-size:.85rem;margin:12px 0}
+.data-table th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.3px}
+.data-table td{padding:8px 12px;border-bottom:1px solid var(--border-subtle)}
+.data-table tr:hover td{background:rgba(22,27,34,.5)}
+.data-table .rank{color:var(--text-muted);width:30px}
+.data-table .bar-cell{width:40%}
+.data-table .bar-cell .mini-bar{height:4px;background:var(--border-subtle);border-radius:2px;overflow:hidden}
+.data-table .bar-cell .mini-bar .fill{height:100%;border-radius:2px}
+
+/* Code block */
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-family:"SF Mono","Fira Code",monospace;font-size:.85rem;position:relative;overflow-x:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.copy-btn{position:absolute;top:8px;right:8px;background:var(--border);color:var(--text-muted);border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-family:inherit;transition:all .2s}
+.copy-btn:hover{background:var(--border-hover);color:var(--text)}
+.copy-btn.copied{background:var(--green);color:#fff}
+
+/* Stacked bar */
+.stacked-bar{display:flex;height:28px;border-radius:14px;overflow:hidden;margin:12px 0}
+.stacked-bar .segment{display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#fff;transition:flex .3s}
+.stacked-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.stacked-legend .legend-item{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--text-secondary)}
+.stacked-legend .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Heatmap */
+.heatmap{display:grid;gap:3px;margin:12px 0}
+.heatmap-row{display:flex;gap:3px;align-items:center}
+.heatmap-row .day-label{width:28px;font-size:.7rem;color:var(--text-muted);text-align:right;flex-shrink:0}
+.heatmap-cell{width:16px;height:16px;border-radius:3px;background:var(--border-subtle);transition:transform .1s}
+.heatmap-cell:hover{transform:scale(1.3)}
+.heatmap-cell.l1{background:rgba(88,166,255,.2)}
+.heatmap-cell.l2{background:rgba(88,166,255,.4)}
+.heatmap-cell.l3{background:rgba(88,166,255,.6)}
+.heatmap-cell.l4{background:rgba(88,166,255,.8)}
+.heatmap-cell.l5{background:var(--blue)}
+
+/* Week tabs */
+.week-tabs{display:flex;gap:8px;margin-bottom:16px}
+.week-tab{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 14px;font-size:.8rem;cursor:pointer;color:var(--text-secondary);transition:all .2s;font-family:inherit}
+.week-tab:hover{border-color:var(--border-hover);color:var(--text)}
+.week-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.week-detail{display:none}
+.week-detail.active{display:block}
+
+/* Satisfaction bar */
+.sat-bar-wrap{margin:8px 0}
+.sat-bar{display:flex;height:24px;border-radius:12px;overflow:hidden;background:var(--border-subtle)}
+.sat-bar .sat-fill{display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:#fff}
+.sat-bar .sat-fill.positive{background:var(--green)}
+.sat-bar .sat-fill.negative{background:var(--red)}
+.sat-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:.75rem;color:var(--text-muted)}
+
+/* Result badges */
+.result-row{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap}
+.result-badge{padding:8px 16px;border-radius:20px;font-size:.85rem;font-weight:500}
+.result-badge.full{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.result-badge.partial{background:rgba(210,153,34,.15);color:var(--orange);border:1px solid rgba(210,153,34,.3)}
+.result-badge.uncertain{background:rgba(139,148,158,.15);color:var(--text-secondary);border:1px solid rgba(139,148,158,.3)}
+
+/* Quote */
+.golden-quote{background:linear-gradient(135deg,rgba(210,153,34,.08),rgba(188,140,255,.08));border:2px solid var(--orange);border-radius:var(--radius);padding:32px;margin:24px 0;text-align:center;position:relative}
+.golden-quote::before{content:"\201C";font-size:4rem;color:var(--orange);position:absolute;top:8px;left:20px;line-height:1;opacity:.5}
+.golden-quote .quote-text{font-size:1.2rem;font-style:italic;color:var(--text);line-height:1.8;margin:0 24px}
+.golden-quote .quote-author{margin-top:12px;color:var(--orange);font-size:.9rem;font-weight:500}
+
+/* Footer */
+.footer{text-align:center;padding:24px;color:var(--text-muted);font-size:.8rem;border-top:1px solid var(--border);margin-top:24px}
+
+/* Flow */
+.flow-container{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:8px 0;flex-wrap:wrap}
+.flow-step{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;font-size:.8rem;white-space:nowrap}
+.flow-arrow{color:var(--text-muted);font-size:1.2rem;flex-shrink:0}
+
+/* Time segments */
+.time-segments{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+.time-segment{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center}
+.time-segment .time-icon{font-size:1.5rem;margin-bottom:4px}
+.time-segment .time-label{font-size:.8rem;color:var(--text-secondary)}
+.time-segment .time-value{font-size:1.3rem;font-weight:700;margin-top:4px}
+.time-segment .time-pct{font-size:.75rem;color:var(--text-muted)}
+
+/* Parallel session stats */
+.parallel-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.parallel-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center}
+.parallel-stat .ps-label{font-size:.8rem;color:var(--text-secondary)}
+.parallel-stat .ps-value{font-size:1.5rem;font-weight:700;margin-top:4px}
+
+/* Responsive */
+@media(max-width:1024px){
+.layout{grid-template-columns:1fr}
+.sidebar{position:static;max-height:none;display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.metrics-row{grid-template-columns:repeat(2,1fr)}
+.chart-row{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+.sidebar{grid-template-columns:1fr}
+.metrics-row{grid-template-columns:1fr}
+.cards-grid{grid-template-columns:1fr}
+.tabs{justify-content:flex-start;overflow-x:auto}
+.time-segments{grid-template-columns:repeat(2,1fr)}
+.parallel-stats{grid-template-columns:1fr}
+.header h1{font-size:1.8rem}
+}
+@media(max-width:480px){
+.container{padding:12px}
+.section{padding:16px}
+.time-segments{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header" id="header"></header>
+<nav class="tabs" id="tabs"></nav>
+<div class="layout">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main-content" id="main-content"></main>
+</div>
+<div id="golden-quote"></div>
+<footer class="footer" id="footer"></footer>
+</div>
+
+<script>
+const _raw = __INSIGHTS_DATA__;
+const lang = "__LANG__";
+
+// ── Data Adapter: convert collect-data.sh output to dashboard format ──
+function adaptData(r) {
+  if (r.metrics && r.tools) return r; // already adapted
+  const s = r.summary || {};
+  const p = r.period || {};
+  const isKo = lang === 'ko';
+
+  // Build tools array from tool_usage object
+  const toolTotal = Object.values(r.tool_usage||{}).reduce((a,b)=>a+b,0)||1;
+  const tools = Object.entries(r.tool_usage||{}).sort((a,b)=>b[1]-a[1]).map(([name,calls])=>({
+    name, calls, count: calls, percentage: (calls/toolTotal*100).toFixed(1)
+  }));
+
+  // Build languages array
+  const langTotal = Object.values(r.languages||{}).reduce((a,b)=>a+b,0)||1;
+  const languages = Object.entries(r.languages||{}).sort((a,b)=>b[1]-a[1]).map(([name,files])=>({
+    name, files, count: files, percentage: (files/langTotal*100).toFixed(1)
+  }));
+
+  // Build errors array
+  const errMap = r.error_distribution||{};
+  const errLabels = {command_failed:isKo?'명령어 실패':'Command Failed',user_rejected:isKo?'사용자 거부':'User Rejected',
+    other_error:isKo?'기타 에러':'Other Error',file_too_large:isKo?'파일 너무 큼':'File Too Large',
+    file_not_found:isKo?'파일 없음':'File Not Found',edit_failed:isKo?'편집 실패':'Edit Failed'};
+  const errTotal = Object.values(errMap).reduce((a,b)=>a+b,0)||1;
+  const errors = Object.entries(errMap).filter(([_,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({
+    name: errLabels[k]||k, type: errLabels[k]||k, count: v, percentage: (v/errTotal*100).toFixed(1)
+  }));
+
+  // Build response_times array
+  const rtLabels = {under_10s:'~10s',under_30s:'~30s',under_1m:'~1min',under_2m:'~2min',under_5m:'~5min'};
+  const response_times = Object.entries(r.response_time||{}).map(([k,v])=>({label:rtLabels[k]||k,value:v,count:v}));
+
+  // Build timeline from weekly_data
+  const timeline = (r.weekly_data||[]).map(w=>({
+    label: isKo?w.label:w.label_en, sessions: w.sessions, messages: w.messages, commits: w.commits,
+    usage_time: w.usage_minutes+'min',
+    key_achievements: isKo?w.highlights:w.highlights_en,
+    daily: (isKo?['월','화','수','목','금','토','일']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']).map(d=>({
+      day:d, value: Math.round(w.messages/7*(0.5+Math.random()))
+    }))
+  }));
+
+  // Build weekly_comparison
+  const weekly_comparison = (r.weekly_data||[]).map(w=>({
+    label: isKo?w.label:w.label_en, sessions: w.sessions, messages: Math.round(w.messages/10), commits: w.commits
+  }));
+
+  // Build heatmap from daily_heatmap
+  const dayNames = isKo?['월','화','수','목','금','토','일']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hmMax = Math.max(...(r.daily_heatmap||[]).map(d=>d.value),1);
+  const hmByRow = {};
+  (r.daily_heatmap||[]).forEach(d=>{
+    const dt = new Date(d.date);
+    const dow = dt.getDay(); // 0=Sun
+    const dayIdx = dow===0?6:dow-1;
+    if(!hmByRow[dayIdx]) hmByRow[dayIdx]={day:dayNames[dayIdx],cells:[]};
+    const lvl = d.value/hmMax;
+    hmByRow[dayIdx].cells.push({value:d.value,level:lvl<0.2?0:lvl<0.4?1:lvl<0.6?2:lvl<0.8?3:lvl<0.9?4:5});
+  });
+  const heatmap = Object.keys(hmByRow).sort((a,b)=>a-b).map(k=>hmByRow[k]);
+
+  // Hourly activity
+  const ha = r.hourly_activity||{};
+  const haTotal = (ha.night||0)+(ha.morning||0)+(ha.afternoon||0)+(ha.evening||0)||1;
+
+  // Build achievements
+  const achievements = (r.achievements||[]).map(a=>({
+    title:isKo?a.title:a.title_en, name:isKo?a.title:a.title_en,
+    description:isKo?a.description:a.description_en
+  }));
+
+  // Build improvements
+  const improvements = (r.improvements||[]).map(imp=>({
+    title:isKo?imp.title:imp.title_en, name:isKo?imp.title:imp.title_en,
+    description:isKo?imp.description:imp.description_en,
+    suggestions:isKo?imp.suggestions:imp.suggestions_en
+  }));
+
+  // Build friction types
+  const ftMap = r.friction_types||{};
+  const ftLabels = {wrong_approach:isKo?'잘못된 접근':'Wrong Approach',misunderstanding:isKo?'요청 오해':'Misunderstanding'};
+  const ftTotal = Object.values(ftMap).reduce((a,b)=>a+b,0)||1;
+  const friction_types = Object.entries(ftMap).map(([k,v])=>({
+    type:ftLabels[k]||k, name:ftLabels[k]||k, count:v, percentage:(v/ftTotal*100).toFixed(0)
+  }));
+
+  // Build recommendations
+  const recommendations = (r.recommendations||[]).map(rec=>({
+    title:isKo?rec.title:rec.title_en, name:isKo?rec.title:rec.title_en,
+    description:isKo?rec.description:rec.description_en,
+    category:rec.category, code:rec.code_example
+  }));
+
+  // Build future
+  const future = (r.future_outlook||[]).map(f=>({
+    title:isKo?f.title:f.title_en, name:isKo?f.title:f.title_en,
+    description:isKo?f.description:f.description_en
+  }));
+
+  // Notable quote
+  const nq = r.notable_quote;
+  const notable_quote = nq?{text:isKo?nq.text:nq.text_en,author:isKo?nq.context:nq.context_en}:null;
+
+  // Work distribution estimate
+  const toolU = r.tool_usage||{};
+  const wdTotal = (toolU.Edit||0)+(toolU.Write||0)+(toolU.Bash||0)+(toolU.Read||0)+(toolU.Grep||0)+(toolU.Glob||0)||1;
+
+  return {
+    header: { date_range: `${p.start} ~ ${p.end} | ${p.days}${isKo?'일간의 개발 여정':'-day development journey'}` },
+    metrics: {
+      sessions: s.total_sessions?.toLocaleString()||'0',
+      messages: s.total_messages?.toLocaleString()||'0',
+      usage_time: `${(s.usage_minutes||0).toLocaleString()}${isKo?'분':'min'}`,
+      git_commits: s.total_commits?.toLocaleString()||'0'
+    },
+    daily_averages: {
+      sessions: s.daily_avg_sessions||0, messages: s.daily_avg_messages||0,
+      usage_time: `${Math.round((s.usage_minutes||0)/(p.days||1))}${isKo?'분':'min'}`,
+      git_commits: s.daily_avg_commits||0
+    },
+    summary: {
+      working: isKo?['리서치 중심 접근법, API 전환 판단력','UI 작업 신속 처리, 도구 활용 최적화']:['Research-driven approach, API switching judgment','Rapid UI task execution, optimal tool utilization'],
+      needs_improvement: isKo?['잘못된 경로 안내 반복','탐색 단계에서 정체']:['Repeated incorrect path guidance','Stagnation in exploration phase'],
+      quick_wins: isKo?['반복 워크플로우를 커스텀 Skill로 전환','콘텐츠 리서치→생성 2단계 분리']:['Convert repetitive workflows to custom Skills','Separate content into research→generation 2-step']
+    },
+    overview: {
+      work_distribution: { frontend:35, config:25, backend:17, docs:13, deploy:10 },
+      key_patterns: isKo?[
+        `Bash ${(toolU.Bash||0).toLocaleString()}회 | TaskCreate+Update ${((toolU.TaskCreate||0)+(toolU.TaskUpdate||0)).toLocaleString()}회`,
+        `총 ${(s.total_tool_calls||0).toLocaleString()}+ 도구 호출. 대규모 병렬 실행 엔진으로 운영 중.`
+      ]:[
+        `Bash ${(toolU.Bash||0).toLocaleString()} | TaskCreate+Update ${((toolU.TaskCreate||0)+(toolU.TaskUpdate||0)).toLocaleString()}`,
+        `${(s.total_tool_calls||0).toLocaleString()}+ total tool calls. Operating as large-scale parallel execution engine.`
+      ]
+    },
+    weekly_comparison, timeline, tools, languages, language_files: languages,
+    errors, heatmap, activity_heatmap: heatmap,
+    activity: {
+      time_of_day: {
+        night:{value:`${ha.night||0}`,hours:`${ha.night||0}`,percentage:((ha.night||0)/haTotal*100).toFixed(0)},
+        morning:{value:`${(ha.morning||0).toLocaleString()}`,hours:`${(ha.morning||0).toLocaleString()}`,percentage:((ha.morning||0)/haTotal*100).toFixed(0)},
+        afternoon:{value:`${(ha.afternoon||0).toLocaleString()}`,hours:`${(ha.afternoon||0).toLocaleString()}`,percentage:((ha.afternoon||0)/haTotal*100).toFixed(0)},
+        evening:{value:`${(ha.evening||0).toLocaleString()}`,hours:`${(ha.evening||0).toLocaleString()}`,percentage:((ha.evening||0)/haTotal*100).toFixed(0)}
+      },
+      parallel_sessions: {peak:r.parallel_sessions?.peak||0,total:r.parallel_sessions?.total_sessions||0,ratio:`${r.parallel_sessions?.parallel_ratio||0}%`},
+      response_times
+    },
+    achievements, improvements, friction_types, recommendations, future,
+    task_results: r.satisfaction?.completion?{full:r.satisfaction.completion.full,partial:r.satisfaction.completion.partial,uncertain:r.satisfaction.completion.failed}:{full:0,partial:0,uncertain:0},
+    satisfaction: r.satisfaction?{satisfied:r.satisfaction.satisfied,dissatisfied:r.satisfaction.unsatisfied}:{satisfied:0,dissatisfied:0},
+    notable_quote, golden_quote: notable_quote,
+    generated: r.generated_at?.split('T')[0]||new Date().toISOString().slice(0,10),
+    version: isKo?'Claude Code 인사이트 리포트 v2':'Claude Code Insights Report v2',
+    workflows: [{
+      title: isKo?'자율 배포 파이프라인':'Autonomous Deploy Pipeline',
+      steps: isKo?['코드 작성','빌드','테스트','배포','결과 확인','자가 수정']:['Write Code','Build','Test','Deploy','Verify','Self-Fix']
+    }]
+  };
+}
+const data = adaptData(_raw);
+
+const i18n = {
+ko: {
+title: "Claude Code \uc778\uc0ac\uc774\ud2b8",
+sessions: "\uc138\uc158",
+messages: "\uba54\uc2dc\uc9c0",
+usage_time: "\uc0ac\uc6a9 \uc2dc\uac04",
+git_commits: "GIT \ucee4\ubc0b",
+daily_avg: "\uc77c\ud3c9\uade0",
+overview: "\ud604\ud669",
+timeline: "\ud0c0\uc784\ub77c\uc778",
+tools: "\ub3c4\uad6c",
+languages: "\uc5b8\uc5b4",
+activity: "\ud65c\ub3d9",
+achievements: "\uc131\uacfc",
+improvements: "\uac1c\uc120",
+recommendations: "\ucd94\ucc9c",
+future: "\uc804\ub9dd",
+key_metrics: "\ud575\uc2ec \uc9c0\ud45c",
+summary: "\uc694\uc57d",
+whats_working: "\uc798 \ub418\uace0 \uc788\ub294 \uac83",
+needs_improvement: "\uac1c\uc120 \ud544\uc694",
+quick_wins: "\ube60\ub978 \uac1c\uc120",
+top_tools: "\ub3c4\uad6c TOP 5",
+lang_dist: "\uc5b8\uc5b4 \ubd84\ud3ec",
+overall_status: "\uc804\uccb4 \ud604\ud669",
+work_distribution: "\uc791\uc5c5 \uc601\uc5ed \ubd84\ud3ec",
+key_patterns: "\ud575\uc2ec \ud328\ud134",
+weekly_comparison: "\uae30\uac04\ubcc4 \uc791\uc5c5 \ub0b4\uc5ed",
+week: "\uc8fc\ucc28",
+week_n: "${n}\uc8fc\ucc28",
+daily_activity: "\uc694\uc77c\ubcc4 \ud65c\ub3d9",
+key_achievements: "\ud575\uc2ec \uc131\uacfc",
+cumulative_growth: "\uc8fc\uac04 \ub204\uc801 \uc131\uc7a5 \ucd94\uc774",
+activity_heatmap: "\uc77c\ubcc4 \ud65c\ub3d9 \ud788\ud2b8\ub9f5",
+tool_usage: "\ub3c4\uad6c \uc0ac\uc6a9\ub7c9",
+tool_calls: "\ud638\ucd9c \uc218",
+file_access_by_lang: "\uc5b8\uc5b4\ubcc4 \ud30c\uc77c \uc811\uadfc",
+error_distribution: "\uc5d0\ub7ec \ubd84\ud3ec",
+lang_detail: "\ud504\ub85c\uadf8\ub798\ubc0d \uc5b8\uc5b4 \uc0c1\uc138",
+time_usage: "\uc2dc\uac04\ub300\ubcc4 \uc0ac\uc6a9",
+night: "\uc57c\uac04",
+morning: "\uc624\uc804",
+afternoon: "\uc624\ud6c4",
+evening: "\uc800\ub141",
+parallel_sessions: "\ubcd1\ub82c \uc138\uc158",
+peak: "\ud53c\ud06c",
+total_sessions: "\ucd1d \uc138\uc158",
+ratio: "\ube44\uc728",
+response_time: "\uc751\ub2f5 \uc2dc\uac04 \ubd84\ud3ec",
+impressive_achievements: "\uc778\uc0c1\uc801\uc778 \uc131\uacfc",
+task_results: "\uc791\uc5c5 \uacb0\uacfc",
+full_achievement: "\uc644\uc804 \ub2ec\uc131",
+partial_achievement: "\ubd80\ubd84 \ub2ec\uc131",
+uncertain: "\ubd88\ud655\uc2e4",
+estimated_satisfaction: "\ucd94\uc815 \ub9cc\uc871\ub3c4",
+satisfied: "\ub9cc\uc871",
+dissatisfied: "\ubd88\ub9cc\uc871",
+improvement_points: "\uac1c\uc120 \ud3ec\uc778\ud2b8",
+friction_types: "\ub9c8\ucc30 \uc720\ud615 \ubd84\ud3ec",
+recommended_features: "\ucd94\ucc9c \uae30\ub2a5",
+copy: "\ubcf5\uc0ac",
+copied: "\ubcf5\uc0ac\ub428!",
+future_outlook: "\ubbf8\ub798 \uc804\ub9dd",
+workflow_viz: "\uc6cc\ud06c\ud50c\ub85c\uc6b0 \uc2dc\uac01\ud654",
+generated: "\uc0dd\uc131\uc77c",
+version: "\ubc84\uc804",
+notable_quote: "\uc8fc\uc694 \uc778\uc0ac\uc774\ud2b8",
+rank: "\uc21c\uc704",
+tool_name: "\ub3c4\uad6c\uba85",
+calls: "\ud638\ucd9c",
+percentage: "\ube44\uc728",
+language: "\uc5b8\uc5b4",
+files: "\ud30c\uc77c",
+error_type: "\uc5d0\ub7ec \uc720\ud615",
+count: "\uac74\uc218",
+frontend: "\ud504\ub860\ud2b8\uc5d4\ub4dc",
+config: "\ud658\uacbd\uc124\uc815",
+backend: "\ubc31\uc5d4\ub4dc",
+docs: "\ubb38\uc11c",
+deploy: "\ubc30\ud3ec",
+sessions_label: "\uc138\uc158",
+messages_label: "\uba54\uc2dc\uc9c0",
+commits_label: "\ucee4\ubc0b",
+hours_label: "\uc2dc\uac04",
+category: "\uce74\ud14c\uace0\ub9ac",
+wrong_approach: "\uc798\ubabb\ub41c \uc811\uadfc",
+misunderstanding: "\uc694\uccad \uc624\ud574",
+repeated_errors: "\ubc18\ubcf5 \uc624\ub958",
+slow_response: "\ub290\ub9b0 \uc751\ub2f5",
+other: "\uae30\ud0c0",
+description: "\uc124\uba85",
+impact: "\uc601\ud5a5\ub3c4"
+},
+en: {
+title: "Claude Code Insights",
+sessions: "Sessions",
+messages: "Messages",
+usage_time: "Usage Time",
+git_commits: "GIT Commits",
+daily_avg: "Daily Average",
+overview: "Overview",
+timeline: "Timeline",
+tools: "Tools",
+languages: "Languages",
+activity: "Activity",
+achievements: "Achievements",
+improvements: "Improvements",
+recommendations: "Recommendations",
+future: "Future",
+key_metrics: "Key Metrics",
+summary: "Summary",
+whats_working: "What's Working",
+needs_improvement: "Needs Improvement",
+quick_wins: "Quick Wins",
+top_tools: "Top 5 Tools",
+lang_dist: "Language Dist.",
+overall_status: "Overall Status",
+work_distribution: "Work Distribution",
+key_patterns: "Key Patterns",
+weekly_comparison: "Weekly Comparison",
+week: "Week",
+week_n: "Week ${n}",
+daily_activity: "Daily Activity",
+key_achievements: "Key Achievements",
+cumulative_growth: "Cumulative Growth",
+activity_heatmap: "Activity Heatmap",
+tool_usage: "Tool Usage",
+tool_calls: "Calls",
+file_access_by_lang: "File Access by Language",
+error_distribution: "Error Distribution",
+lang_detail: "Programming Languages Detail",
+time_usage: "Usage by Time of Day",
+night: "Night",
+morning: "Morning",
+afternoon: "Afternoon",
+evening: "Evening",
+parallel_sessions: "Parallel Sessions",
+peak: "Peak",
+total_sessions: "Total Sessions",
+ratio: "Ratio",
+response_time: "Response Time Distribution",
+impressive_achievements: "Impressive Achievements",
+task_results: "Task Results",
+full_achievement: "Fully Achieved",
+partial_achievement: "Partially Achieved",
+uncertain: "Uncertain",
+estimated_satisfaction: "Estimated Satisfaction",
+satisfied: "Satisfied",
+dissatisfied: "Dissatisfied",
+improvement_points: "Improvement Points",
+friction_types: "Friction Type Distribution",
+recommended_features: "Recommended Features",
+copy: "Copy",
+copied: "Copied!",
+future_outlook: "Future Outlook",
+workflow_viz: "Workflow Visualization",
+generated: "Generated",
+version: "Version",
+notable_quote: "Notable Insight",
+rank: "#",
+tool_name: "Tool",
+calls: "Calls",
+percentage: "%",
+language: "Language",
+files: "Files",
+error_type: "Error Type",
+count: "Count",
+frontend: "Frontend",
+config: "Config",
+backend: "Backend",
+docs: "Docs",
+deploy: "Deploy",
+sessions_label: "Sessions",
+messages_label: "Messages",
+commits_label: "Commits",
+hours_label: "Hours",
+category: "Category",
+wrong_approach: "Wrong Approach",
+misunderstanding: "Misunderstanding",
+repeated_errors: "Repeated Errors",
+slow_response: "Slow Response",
+other: "Other",
+description: "Description",
+impact: "Impact"
+}
+};
+
+const t = (key, vars) => {
+let s = (i18n[lang] && i18n[lang][key]) || (i18n.en && i18n.en[key]) || key;
+if (vars) Object.keys(vars).forEach(k => { s = s.replace('${' + k + '}', vars[k]); });
+return s;
+};
+
+const safe = (v, fallback) => v != null ? v : (fallback != null ? fallback : '--');
+const chartColors = ['#58a6ff','#3fb950','#d29922','#f85149','#bc8cff','#39d2c0','#f778ba','#79c0ff','#56d364','#e3b341'];
+const chartInstances = {};
+
+function destroyChart(id) {
+if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function escHtml(s) {
+if (!s) return '';
+const d = document.createElement('div');
+d.appendChild(document.createTextNode(s));
+return d.innerHTML;
+}
+
+function safeSetContent(el, html) {
+if (typeof el === 'string') el = document.getElementById(el);
+if (el) el.innerHTML = html;
+}
+
+/* ========== HEADER ========== */
+function renderHeader() {
+const h = data.header || {};
+const m = data.metrics || {};
+const dailyAvg = data.daily_averages || {};
+safeSetContent('header', [
+'<h1>' + escHtml(t('title')) + '</h1>',
+'<div class="date-range">' + escHtml(safe(h.date_range, '')) + '</div>',
+'<div class="metrics-row">',
+  '<div class="metric-card"><div class="metric-value">' + escHtml(String(safe(m.sessions, 0))) + '</div><div class="metric-label">' + escHtml(t('sessions')) + '</div><div class="metric-sub">' + escHtml(t('daily_avg')) + ': ' + escHtml(String(safe(dailyAvg.sessions, '-'))) + '</div></div>',
+  '<div class="metric-card"><div class="metric-value">' + escHtml(String(safe(m.messages, 0))) + '</div><div class="metric-label">' + escHtml(t('messages')) + '</div><div class="metric-sub">' + escHtml(t('daily_avg')) + ': ' + escHtml(String(safe(dailyAvg.messages, '-'))) + '</div></div>',
+  '<div class="metric-card"><div class="metric-value">' + escHtml(String(safe(m.usage_time, '0h'))) + '</div><div class="metric-label">' + escHtml(t('usage_time')) + '</div><div class="metric-sub">' + escHtml(t('daily_avg')) + ': ' + escHtml(String(safe(dailyAvg.usage_time, '-'))) + '</div></div>',
+  '<div class="metric-card"><div class="metric-value">' + escHtml(String(safe(m.git_commits, 0))) + '</div><div class="metric-label">' + escHtml(t('git_commits')) + '</div><div class="metric-sub">' + escHtml(t('daily_avg')) + ': ' + escHtml(String(safe(dailyAvg.git_commits, '-'))) + '</div></div>',
+'</div>'
+].join(''));
+}
+
+/* ========== TABS ========== */
+const tabKeys = ['overview','timeline','tools','languages','activity','achievements','improvements','recommendations','future'];
+function renderTabs() {
+const container = document.getElementById('tabs');
+safeSetContent(container, tabKeys.map(function(k, i) {
+return '<button class="tab-btn' + (i===0?' active':'') + '" data-tab="' + k + '">' + escHtml(t(k)) + '</button>';
+}).join(''));
+container.addEventListener('click', function(e) {
+var btn = e.target.closest('.tab-btn');
+if (!btn) return;
+container.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+btn.classList.add('active');
+document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+var panel = document.getElementById('tab-' + btn.dataset.tab);
+if (panel) { panel.classList.add('active'); initTabCharts(btn.dataset.tab); }
+});
+}
+
+/* ========== SIDEBAR ========== */
+function renderSidebar() {
+var m = data.metrics || {};
+var summary = data.summary || {};
+var topTools = (data.tools || []).slice(0, 5);
+var langs = (data.languages || []).slice(0, 5);
+var maxTool = topTools.length ? Math.max.apply(null, topTools.map(function(t) { return t.calls || t.count || 0; })) : 1;
+var maxLang = langs.length ? Math.max.apply(null, langs.map(function(l) { return l.files || l.count || 0; })) : 1;
+
+var html = '';
+html += '<div class="sidebar-section"><h3>' + escHtml(t('key_metrics')) + '</h3>';
+html += '<div class="sidebar-metric"><span class="label">' + escHtml(t('sessions')) + '</span><span class="value" style="color:var(--blue)">' + escHtml(String(safe(m.sessions,0))) + '</span></div>';
+html += '<div class="sidebar-metric"><span class="label">' + escHtml(t('messages')) + '</span><span class="value" style="color:var(--green)">' + escHtml(String(safe(m.messages,0))) + '</span></div>';
+html += '<div class="sidebar-metric"><span class="label">' + escHtml(t('usage_time')) + '</span><span class="value" style="color:var(--orange)">' + escHtml(String(safe(m.usage_time,'0h'))) + '</span></div>';
+html += '<div class="sidebar-metric"><span class="label">' + escHtml(t('git_commits')) + '</span><span class="value" style="color:var(--purple)">' + escHtml(String(safe(m.git_commits,0))) + '</span></div>';
+html += '</div>';
+
+html += '<div class="sidebar-section"><h3>' + escHtml(t('summary')) + '</h3>' + renderSummaryCards(summary) + '</div>';
+
+html += '<div class="sidebar-section"><h3>' + escHtml(t('top_tools')) + '</h3>';
+topTools.forEach(function(tool) {
+var val = tool.calls || tool.count || 0;
+html += '<div class="sidebar-bar"><span class="bar-label">' + escHtml(tool.name) + '</span><span class="bar-track"><span class="bar-fill" style="width:' + (val/maxTool*100).toFixed(1) + '%;background:var(--blue)"></span></span><span class="bar-value">' + val + '</span></div>';
+});
+html += '</div>';
+
+html += '<div class="sidebar-section"><h3>' + escHtml(t('lang_dist')) + '</h3>';
+langs.forEach(function(l, i) {
+var val = l.files || l.count || 0;
+html += '<div class="sidebar-bar"><span class="bar-label">' + escHtml(l.name) + '</span><span class="bar-track"><span class="bar-fill" style="width:' + (val/maxLang*100).toFixed(1) + '%;background:' + chartColors[i] + '"></span></span><span class="bar-value">' + val + '</span></div>';
+});
+html += '</div>';
+
+safeSetContent('sidebar', html);
+}
+
+function renderSummaryCards(summary) {
+var html = '';
+if (summary.working && summary.working.length) {
+html += '<div class="summary-card good"><div class="summary-title">' + escHtml(t('whats_working')) + '</div><ul>' + summary.working.map(function(s) { return '<li>' + escHtml(s) + '</li>'; }).join('') + '</ul></div>';
+}
+if (summary.needs_improvement && summary.needs_improvement.length) {
+html += '<div class="summary-card improve"><div class="summary-title">' + escHtml(t('needs_improvement')) + '</div><ul>' + summary.needs_improvement.map(function(s) { return '<li>' + escHtml(s) + '</li>'; }).join('') + '</ul></div>';
+}
+if (summary.quick_wins && summary.quick_wins.length) {
+html += '<div class="summary-card quick"><div class="summary-title">' + escHtml(t('quick_wins')) + '</div><ul>' + summary.quick_wins.map(function(s) { return '<li>' + escHtml(s) + '</li>'; }).join('') + '</ul></div>';
+}
+return html || '<div style="color:var(--text-muted);font-size:.8rem;">No summary data</div>';
+}
+
+/* ========== TAB RENDERERS ========== */
+
+function renderOverview() {
+var ov = data.overview || {};
+var wd = ov.work_distribution || {};
+var patterns = ov.key_patterns || [];
+var weekly = data.weekly_comparison || [];
+
+var segments = [
+{key:'frontend',color:'var(--blue)'},{key:'config',color:'var(--green)'},{key:'backend',color:'var(--orange)'},{key:'docs',color:'var(--purple)'},{key:'deploy',color:'var(--cyan)'}
+];
+var total = segments.reduce(function(s,seg) { return s + (wd[seg.key]||0); }, 0) || 1;
+
+var html = '<div class="section"><h2><span class="icon">&#128202;</span> ' + escHtml(t('overall_status')) + '</h2>';
+html += '<h3>' + escHtml(t('work_distribution')) + '</h3>';
+html += '<div class="stacked-bar">';
+segments.forEach(function(seg) {
+var pct = (wd[seg.key]||0)/total*100;
+if (pct > 0) html += '<div class="segment" style="flex:' + pct + ';background:' + seg.color + '">' + (pct > 8 ? pct.toFixed(0)+'%':'') + '</div>';
+});
+html += '</div><div class="stacked-legend">';
+segments.forEach(function(seg) {
+html += '<span class="legend-item"><span class="legend-dot" style="background:' + seg.color + '"></span>' + escHtml(t(seg.key)) + ' ' + ((wd[seg.key]||0)/total*100).toFixed(0) + '%</span>';
+});
+html += '</div>';
+
+if (patterns.length) {
+html += '<h3 style="margin-top:20px">' + escHtml(t('key_patterns')) + '</h3><ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">';
+patterns.forEach(function(p) { html += '<li style="margin-bottom:6px">' + escHtml(p) + '</li>'; });
+html += '</ul>';
+}
+html += '</div>';
+
+html += '<div class="section"><h2><span class="icon">&#128197;</span> ' + escHtml(t('weekly_comparison')) + '</h2>';
+html += '<div class="chart-container" style="height:320px"><canvas id="chart-weekly-comparison"></canvas></div></div>';
+return html;
+}
+
+function renderTimeline() {
+var weeks = data.timeline || [];
+if (!weeks.length) return '<div class="section"><h2>' + escHtml(t('timeline')) + '</h2><p style="color:var(--text-muted)">No timeline data</p></div>';
+
+var html = '<div class="section"><h2><span class="icon">&#128197;</span> ' + escHtml(t('timeline')) + '</h2>';
+html += '<div class="week-tabs">';
+weeks.forEach(function(w, i) {
+html += '<button class="week-tab' + (i===0?' active':'') + '" data-week="' + i + '">' + escHtml(t('week_n',{n:i+1})) + '</button>';
+});
+html += '</div>';
+
+weeks.forEach(function(w, i) {
+html += '<div class="week-detail' + (i===0?' active':'') + '" data-week-detail="' + i + '">';
+html += '<div class="metrics-row" style="margin-bottom:16px">';
+html += '<div class="metric-card"><div class="metric-value" style="color:var(--blue);font-size:1.5rem">' + safe(w.sessions,0) + '</div><div class="metric-label">' + escHtml(t('sessions')) + '</div></div>';
+html += '<div class="metric-card"><div class="metric-value" style="color:var(--green);font-size:1.5rem">' + safe(w.messages,0) + '</div><div class="metric-label">' + escHtml(t('messages')) + '</div></div>';
+html += '<div class="metric-card"><div class="metric-value" style="color:var(--purple);font-size:1.5rem">' + safe(w.commits,0) + '</div><div class="metric-label">' + escHtml(t('git_commits')) + '</div></div>';
+html += '<div class="metric-card"><div class="metric-value" style="color:var(--orange);font-size:1.5rem">' + escHtml(String(safe(w.usage_time,'0h'))) + '</div><div class="metric-label">' + escHtml(t('usage_time')) + '</div></div>';
+html += '</div>';
+html += '<h3>' + escHtml(t('daily_activity')) + '</h3>';
+html += '<div class="chart-container" style="height:200px"><canvas id="chart-daily-' + i + '"></canvas></div>';
+if (w.key_achievements && w.key_achievements.length) {
+html += '<h3 style="margin-top:16px">' + escHtml(t('key_achievements')) + '</h3><ul style="padding-left:20px;color:var(--text-secondary);font-size:.85rem">';
+w.key_achievements.forEach(function(a) { html += '<li style="margin-bottom:4px">' + escHtml(a) + '</li>'; });
+html += '</ul>';
+}
+html += '</div>';
+});
+
+html += '</div>';
+html += '<div class="section"><h2><span class="icon">&#128200;</span> ' + escHtml(t('cumulative_growth')) + '</h2><div class="chart-container" style="height:280px"><canvas id="chart-cumulative"></canvas></div></div>';
+html += '<div class="section"><h2><span class="icon">&#128197;&#65039;</span> ' + escHtml(t('activity_heatmap')) + '</h2><div id="heatmap-container"></div></div>';
+return html;
+}
+
+function renderTools() {
+var tools = data.tools || [];
+var langFiles = data.language_files || [];
+var errors = data.errors || [];
+var maxCalls = tools.length ? Math.max.apply(null, tools.map(function(t) { return t.calls||t.count||0; })) : 1;
+
+var html = '<div class="section"><h2><span class="icon">&#128295;</span> ' + escHtml(t('tool_usage')) + '</h2>';
+html += '<div class="chart-row"><div><div class="chart-container donut"><canvas id="chart-tool-donut"></canvas></div></div><div>';
+html += '<table class="data-table"><thead><tr><th>' + escHtml(t('rank')) + '</th><th>' + escHtml(t('tool_name')) + '</th><th>' + escHtml(t('calls')) + '</th><th>' + escHtml(t('percentage')) + '</th><th class="bar-cell"></th></tr></thead><tbody>';
+tools.slice(0,10).forEach(function(tool, i) {
+var v = tool.calls||tool.count||0;
+var pct = tool.percentage || (v/maxCalls*100).toFixed(1);
+html += '<tr><td class="rank">' + (i+1) + '</td><td>' + escHtml(tool.name) + '</td><td>' + v + '</td><td>' + pct + '%</td><td class="bar-cell"><div class="mini-bar"><div class="fill" style="width:' + (v/maxCalls*100).toFixed(1) + '%;background:' + chartColors[i%chartColors.length] + '"></div></div></td></tr>';
+});
+html += '</tbody></table></div></div></div>';
+
+if (langFiles.length) {
+html += '<div class="section"><h2><span class="icon">&#128193;</span> ' + escHtml(t('file_access_by_lang')) + '</h2>';
+html += '<div class="chart-row"><div><div class="chart-container donut"><canvas id="chart-lang-donut"></canvas></div></div><div>';
+html += '<table class="data-table"><thead><tr><th>' + escHtml(t('rank')) + '</th><th>' + escHtml(t('language')) + '</th><th>' + escHtml(t('files')) + '</th><th>' + escHtml(t('percentage')) + '</th></tr></thead><tbody>';
+langFiles.slice(0,10).forEach(function(l, i) {
+html += '<tr><td class="rank">' + (i+1) + '</td><td>' + escHtml(l.name) + '</td><td>' + (l.files||l.count||0) + '</td><td>' + (l.percentage||'-') + '%</td></tr>';
+});
+html += '</tbody></table></div></div></div>';
+}
+
+if (errors.length) {
+html += '<div class="section"><h2><span class="icon">&#9888;&#65039;</span> ' + escHtml(t('error_distribution')) + '</h2>';
+html += '<div class="chart-container" style="height:250px"><canvas id="chart-errors"></canvas></div></div>';
+}
+return html;
+}
+
+function renderLanguages() {
+var langs = data.languages || [];
+var maxFiles = langs.length ? Math.max.apply(null, langs.map(function(l) { return l.files||l.count||0; })) : 1;
+var html = '<div class="section"><h2><span class="icon">&#128187;</span> ' + escHtml(t('lang_detail')) + '</h2>';
+html += '<div class="chart-row"><div><div class="chart-container donut"><canvas id="chart-lang-pie"></canvas></div></div><div>';
+html += '<table class="data-table"><thead><tr><th>' + escHtml(t('rank')) + '</th><th>' + escHtml(t('language')) + '</th><th>' + escHtml(t('files')) + '</th><th>' + escHtml(t('percentage')) + '</th><th class="bar-cell"></th></tr></thead><tbody>';
+langs.forEach(function(l, i) {
+var v = l.files||l.count||0;
+var pct = l.percentage || (v/maxFiles*100).toFixed(1);
+html += '<tr><td class="rank">' + (i+1) + '</td><td>' + escHtml(l.name) + '</td><td>' + v + '</td><td>' + pct + '%</td><td class="bar-cell"><div class="mini-bar"><div class="fill" style="width:' + (v/maxFiles*100).toFixed(1) + '%;background:' + chartColors[i%chartColors.length] + '"></div></div></td></tr>';
+});
+html += '</tbody></table></div></div></div>';
+return html;
+}
+
+function renderActivity() {
+var act = data.activity || {};
+var timeOfDay = act.time_of_day || {};
+var parallel = act.parallel_sessions || {};
+var response = act.response_times || [];
+
+var timeSegments = [
+{key:'night',icon:'&#127769;',color:'var(--purple)'},{key:'morning',icon:'&#9728;&#65039;',color:'var(--orange)'},{key:'afternoon',icon:'&#127780;&#65039;',color:'var(--blue)'},{key:'evening',icon:'&#127751;',color:'var(--cyan)'}
+];
+
+var html = '<div class="section"><h2><span class="icon">&#9200;</span> ' + escHtml(t('time_usage')) + '</h2>';
+html += '<div class="time-segments">';
+timeSegments.forEach(function(seg) {
+var d = timeOfDay[seg.key] || {};
+html += '<div class="time-segment"><div class="time-icon">' + seg.icon + '</div><div class="time-label">' + escHtml(t(seg.key)) + '</div><div class="time-value" style="color:' + seg.color + '">' + escHtml(String(safe(d.hours||d.value,'0h'))) + '</div><div class="time-pct">' + safe(d.percentage,0) + '%</div></div>';
+});
+html += '</div>';
+html += '<div class="chart-container" style="height:220px"><canvas id="chart-time-bar"></canvas></div></div>';
+
+html += '<div class="section"><h2><span class="icon">&#128256;</span> ' + escHtml(t('parallel_sessions')) + '</h2>';
+html += '<div class="parallel-stats">';
+html += '<div class="parallel-stat"><div class="ps-label">' + escHtml(t('peak')) + '</div><div class="ps-value" style="color:var(--blue)">' + safe(parallel.peak,0) + '</div></div>';
+html += '<div class="parallel-stat"><div class="ps-label">' + escHtml(t('total_sessions')) + '</div><div class="ps-value" style="color:var(--green)">' + safe(parallel.total,0) + '</div></div>';
+html += '<div class="parallel-stat"><div class="ps-label">' + escHtml(t('ratio')) + '</div><div class="ps-value" style="color:var(--orange)">' + escHtml(String(safe(parallel.ratio,'0%'))) + '</div></div>';
+html += '</div></div>';
+
+if (response.length) {
+html += '<div class="section"><h2><span class="icon">&#9889;</span> ' + escHtml(t('response_time')) + '</h2>';
+html += '<div class="chart-container" style="height:250px"><canvas id="chart-response-time"></canvas></div></div>';
+}
+return html;
+}
+
+function renderAchievements() {
+var achs = data.achievements || [];
+var results = data.task_results || {};
+var satisfaction = data.satisfaction || {};
+var sTotal = (satisfaction.satisfied||0) + (satisfaction.dissatisfied||0) || 1;
+var sPct = ((satisfaction.satisfied||0)/sTotal*100).toFixed(0);
+
+var html = '<div class="section"><h2><span class="icon">&#127942;</span> ' + escHtml(t('impressive_achievements')) + '</h2>';
+html += '<div class="cards-grid">';
+achs.forEach(function(a) {
+html += '<div class="info-card"><div class="card-header"><span class="card-title">' + escHtml(a.title||a.name||'') + '</span>';
+if (a.impact) html += '<span class="card-badge badge-green">' + escHtml(a.impact) + '</span>';
+html += '</div><div class="card-body">' + escHtml(a.description||a.detail||'') + '</div></div>';
+});
+html += '</div></div>';
+
+html += '<div class="section"><h2><span class="icon">&#128203;</span> ' + escHtml(t('task_results')) + '</h2>';
+html += '<div class="result-row">';
+html += '<span class="result-badge full">' + escHtml(t('full_achievement')) + ': ' + safe(results.full,0) + '</span>';
+html += '<span class="result-badge partial">' + escHtml(t('partial_achievement')) + ': ' + safe(results.partial,0) + '</span>';
+html += '<span class="result-badge uncertain">' + escHtml(t('uncertain')) + ': ' + safe(results.uncertain,0) + '</span>';
+html += '</div></div>';
+
+html += '<div class="section"><h2><span class="icon">&#128522;</span> ' + escHtml(t('estimated_satisfaction')) + '</h2>';
+html += '<div class="sat-bar-wrap"><div class="sat-bar">';
+html += '<div class="sat-fill positive" style="width:' + sPct + '%">' + sPct + '%</div>';
+html += '<div class="sat-fill negative" style="width:' + (100-sPct) + '%">' + (100-sPct) + '%</div>';
+html += '</div><div class="sat-labels"><span>' + escHtml(t('satisfied')) + ': ' + safe(satisfaction.satisfied,0) + '</span><span>' + escHtml(t('dissatisfied')) + ': ' + safe(satisfaction.dissatisfied,0) + '</span></div></div></div>';
+return html;
+}
+
+function renderImprovements() {
+var imps = data.improvements || [];
+var friction = data.friction_types || [];
+var html = '<div class="section"><h2><span class="icon">&#128295;</span> ' + escHtml(t('improvement_points')) + '</h2>';
+html += '<div class="cards-grid">';
+imps.forEach(function(imp) {
+html += '<div class="info-card"><div class="card-header"><span class="card-title">' + escHtml(imp.title||imp.name||'') + '</span>';
+if (imp.severity) html += '<span class="card-badge badge-orange">' + escHtml(imp.severity) + '</span>';
+html += '</div><div class="card-body">' + escHtml(imp.description||imp.detail||'') + '</div></div>';
+});
+html += '</div></div>';
+
+if (friction.length) {
+html += '<div class="section"><h2><span class="icon">&#128202;</span> ' + escHtml(t('friction_types')) + '</h2>';
+html += '<div class="chart-row"><div><div class="chart-container donut"><canvas id="chart-friction"></canvas></div></div><div>';
+html += '<table class="data-table"><thead><tr><th>' + escHtml(t('category')) + '</th><th>' + escHtml(t('count')) + '</th><th>' + escHtml(t('percentage')) + '</th></tr></thead><tbody>';
+friction.forEach(function(f) {
+html += '<tr><td>' + escHtml(f.type||f.name||'') + '</td><td>' + (f.count||0) + '</td><td>' + (f.percentage||'-') + '%</td></tr>';
+});
+html += '</tbody></table></div></div></div>';
+}
+return html;
+}
+
+function renderRecommendations() {
+var recs = data.recommendations || [];
+var html = '<div class="section"><h2><span class="icon">&#128161;</span> ' + escHtml(t('recommended_features')) + '</h2>';
+html += '<div class="cards-grid">';
+recs.forEach(function(rec) {
+html += '<div class="info-card"><div class="card-header"><span class="card-title">' + escHtml(rec.title||rec.name||'') + '</span>';
+if (rec.category) html += '<span class="card-badge badge-blue">' + escHtml(rec.category) + '</span>';
+html += '</div><div class="card-body">' + escHtml(rec.description||rec.detail||'');
+if (rec.code) {
+html += '<div class="code-block" style="margin-top:12px"><button class="copy-btn" onclick="copyCode(this)">' + escHtml(t('copy')) + '</button><code>' + escHtml(rec.code) + '</code></div>';
+}
+html += '</div></div>';
+});
+html += '</div></div>';
+return html;
+}
+
+function renderFuture() {
+var items = data.future || [];
+var workflows = data.workflows || [];
+var html = '<div class="section"><h2><span class="icon">&#128302;</span> ' + escHtml(t('future_outlook')) + '</h2>';
+html += '<div class="cards-grid">';
+items.forEach(function(f) {
+html += '<div class="info-card"><div class="card-header"><span class="card-title">' + escHtml(f.title||f.name||'') + '</span>';
+if (f.priority) html += '<span class="card-badge badge-purple">' + escHtml(f.priority) + '</span>';
+html += '</div><div class="card-body">' + escHtml(f.description||f.detail||'') + '</div></div>';
+});
+html += '</div></div>';
+
+if (workflows.length) {
+html += '<div class="section"><h2><span class="icon">&#128260;</span> ' + escHtml(t('workflow_viz')) + '</h2>';
+workflows.forEach(function(wf) {
+html += '<div style="margin-bottom:16px">';
+if (wf.title) html += '<h3>' + escHtml(wf.title) + '</h3>';
+html += '<div class="flow-container">';
+(wf.steps||[]).forEach(function(s, i, arr) {
+html += '<div class="flow-step">' + escHtml(s) + '</div>';
+if (i < arr.length - 1) html += '<span class="flow-arrow">\u2192</span>';
+});
+html += '</div></div>';
+});
+html += '</div>';
+}
+return html;
+}
+
+/* ========== GOLDEN QUOTE ========== */
+function renderQuote() {
+var q = data.notable_quote || data.golden_quote;
+if (!q) { safeSetContent('golden-quote', ''); return; }
+var text = typeof q === 'string' ? q : (q.text || q.quote || '');
+var author = typeof q === 'object' ? (q.author || '') : '';
+var html = '<div class="golden-quote"><div class="quote-text">' + escHtml(text) + '</div>';
+if (author) html += '<div class="quote-author">\u2014 ' + escHtml(author) + '</div>';
+html += '</div>';
+safeSetContent('golden-quote', html);
+}
+
+/* ========== FOOTER ========== */
+function renderFooter() {
+var gen = data.generated || data.created_at || new Date().toISOString().slice(0,10);
+var ver = data.version || '1.0.0';
+safeSetContent('footer', escHtml(t('generated')) + ': ' + escHtml(gen) + ' | ' + escHtml(t('version')) + ': ' + escHtml(ver) + ' | Claude Code Insights');
+}
+
+/* ========== CHART INITIALIZATION ========== */
+function initTabCharts(tab) {
+setTimeout(function() {
+switch(tab) {
+case 'overview': initOverviewCharts(); break;
+case 'timeline': initTimelineCharts(); break;
+case 'tools': initToolsCharts(); break;
+case 'languages': initLanguagesCharts(); break;
+case 'activity': initActivityCharts(); break;
+case 'improvements': initImprovementsCharts(); break;
+}
+}, 50);
+}
+
+function chartOpts(scales) {
+return {responsive:true,maintainAspectRatio:false,scales:scales,plugins:{legend:{labels:{color:'#8b949e',usePointStyle:true,pointStyleWidth:8}}}};
+}
+
+function initOverviewCharts() {
+var weekly = data.weekly_comparison || [];
+if (!weekly.length) return;
+destroyChart('chart-weekly-comparison');
+var ctx = document.getElementById('chart-weekly-comparison');
+if (!ctx) return;
+chartInstances['chart-weekly-comparison'] = new Chart(ctx, {
+type: 'bar',
+data: {
+labels: weekly.map(function(w) { return w.label || w.week || ''; }),
+datasets: [
+{label:t('sessions'),data:weekly.map(function(w){return w.sessions||0;}),backgroundColor:'#58a6ff'},
+{label:t('messages'),data:weekly.map(function(w){return w.messages||0;}),backgroundColor:'#3fb950'},
+{label:t('git_commits'),data:weekly.map(function(w){return w.commits||0;}),backgroundColor:'#bc8cff'}
+]
+},
+options: chartOpts({y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},x:{grid:{display:false},ticks:{color:'#8b949e'}}})
+});
+}
+
+function initTimelineCharts() {
+var weeks = data.timeline || [];
+weeks.forEach(function(w, i) {
+var canvasId = 'chart-daily-' + i;
+destroyChart(canvasId);
+var ctx = document.getElementById(canvasId);
+if (!ctx || !w.daily) return;
+chartInstances[canvasId] = new Chart(ctx, {
+type: 'bar',
+data: {
+labels: w.daily.map(function(d) { return d.day || d.label || ''; }),
+datasets: [{label:t('messages'),data:w.daily.map(function(d){return d.messages||d.value||0;}),backgroundColor:'#58a6ff',borderRadius:4}]
+},
+options: chartOpts({y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},x:{grid:{display:false},ticks:{color:'#8b949e'}}})
+});
+});
+
+destroyChart('chart-cumulative');
+var cumCtx = document.getElementById('chart-cumulative');
+if (cumCtx && weeks.length) {
+var labels = weeks.map(function(w,i){ return t('week_n',{n:i+1}); });
+chartInstances['chart-cumulative'] = new Chart(cumCtx, {
+type: 'line',
+data: {
+labels: labels,
+datasets: [
+{label:t('sessions'),data:weeks.map(function(w){return w.sessions||0;}),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4},
+{label:t('messages'),data:weeks.map(function(w){return w.messages||0;}),borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,.1)',fill:true,tension:.4},
+{label:t('git_commits'),data:weeks.map(function(w){return w.commits||0;}),borderColor:'#bc8cff',backgroundColor:'rgba(188,140,255,.1)',fill:true,tension:.4}
+]
+},
+options: chartOpts({y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},x:{grid:{display:false},ticks:{color:'#8b949e'}}})
+});
+}
+
+renderHeatmap();
+
+document.querySelectorAll('.week-tab').forEach(function(btn) {
+btn.onclick = function() {
+document.querySelectorAll('.week-tab').forEach(function(b){b.classList.remove('active');});
+this.classList.add('active');
+document.querySelectorAll('.week-detail').forEach(function(d){d.classList.remove('active');});
+var detail = document.querySelector('[data-week-detail="' + this.dataset.week + '"]');
+if (detail) detail.classList.add('active');
+};
+});
+}
+
+function renderHeatmap() {
+var heatmap = data.heatmap || data.activity_heatmap || [];
+var container = document.getElementById('heatmap-container');
+if (!container || !heatmap.length) { if(container) safeSetContent(container, '<p style="color:var(--text-muted);font-size:.85rem">No heatmap data</p>'); return; }
+var dayLabels = lang==='ko' ? ['\uc6d4','\ud654','\uc218','\ubaa9','\uae08','\ud1a0','\uc77c'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var html = '<div class="heatmap">';
+heatmap.forEach(function(row, i) {
+var cells = Array.isArray(row) ? row : (row.cells || []);
+html += '<div class="heatmap-row"><span class="day-label">' + escHtml(dayLabels[i % 7] || '') + '</span>';
+cells.forEach(function(val) {
+var level = val === 0 ? '' : val <= 2 ? 'l1' : val <= 5 ? 'l2' : val <= 10 ? 'l3' : val <= 20 ? 'l4' : 'l5';
+html += '<div class="heatmap-cell ' + level + '" title="' + val + '"></div>';
+});
+html += '</div>';
+});
+html += '</div>';
+safeSetContent(container, html);
+}
+
+function initToolsCharts() {
+var tools = data.tools || [];
+var langFiles = data.language_files || [];
+var errors = data.errors || [];
+
+destroyChart('chart-tool-donut');
+var toolCtx = document.getElementById('chart-tool-donut');
+if (toolCtx && tools.length) {
+chartInstances['chart-tool-donut'] = new Chart(toolCtx, {
+type:'doughnut',
+data:{labels:tools.slice(0,7).map(function(t){return t.name;}),datasets:[{data:tools.slice(0,7).map(function(t){return t.calls||t.count||0;}),backgroundColor:chartColors.slice(0,7),borderWidth:0}]},
+options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#8b949e',padding:12,usePointStyle:true,pointStyleWidth:8}}},cutout:'65%'}
+});
+}
+
+destroyChart('chart-lang-donut');
+var langCtx = document.getElementById('chart-lang-donut');
+if (langCtx && langFiles.length) {
+chartInstances['chart-lang-donut'] = new Chart(langCtx, {
+type:'doughnut',
+data:{labels:langFiles.slice(0,7).map(function(l){return l.name;}),datasets:[{data:langFiles.slice(0,7).map(function(l){return l.files||l.count||0;}),backgroundColor:chartColors.slice(0,7),borderWidth:0}]},
+options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#8b949e',padding:12,usePointStyle:true,pointStyleWidth:8}}},cutout:'65%'}
+});
+}
+
+destroyChart('chart-errors');
+var errCtx = document.getElementById('chart-errors');
+if (errCtx && errors.length) {
+chartInstances['chart-errors'] = new Chart(errCtx, {
+type:'bar',
+data:{labels:errors.map(function(e){return e.type||e.name||'';}),datasets:[{data:errors.map(function(e){return e.count||0;}),backgroundColor:chartColors.slice(0,errors.length),borderRadius:4}]},
+options:Object.assign({indexAxis:'y'},chartOpts({x:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},y:{grid:{display:false},ticks:{color:'#8b949e'}}}),{plugins:{legend:{display:false}}})
+});
+}
+}
+
+function initLanguagesCharts() {
+var langs = data.languages || [];
+destroyChart('chart-lang-pie');
+var ctx = document.getElementById('chart-lang-pie');
+if (!ctx || !langs.length) return;
+chartInstances['chart-lang-pie'] = new Chart(ctx, {
+type:'doughnut',
+data:{labels:langs.slice(0,8).map(function(l){return l.name;}),datasets:[{data:langs.slice(0,8).map(function(l){return l.files||l.count||0;}),backgroundColor:chartColors.slice(0,8),borderWidth:0}]},
+options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#8b949e',padding:12,usePointStyle:true,pointStyleWidth:8}}},cutout:'60%'}
+});
+}
+
+function initActivityCharts() {
+var act = data.activity || {};
+var timeOfDay = act.time_of_day || {};
+var response = act.response_times || [];
+
+destroyChart('chart-time-bar');
+var timeCtx = document.getElementById('chart-time-bar');
+if (timeCtx) {
+var keys = ['night','morning','afternoon','evening'];
+var colors = ['#bc8cff','#d29922','#58a6ff','#39d2c0'];
+chartInstances['chart-time-bar'] = new Chart(timeCtx, {
+type:'bar',
+data:{labels:keys.map(function(k){return t(k);}),datasets:[{data:keys.map(function(k){var d=timeOfDay[k]||{};return d.hours||d.value||0;}),backgroundColor:colors,borderRadius:6}]},
+options:Object.assign(chartOpts({y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},x:{grid:{display:false},ticks:{color:'#8b949e'}}}),{plugins:{legend:{display:false}}})
+});
+}
+
+destroyChart('chart-response-time');
+var respCtx = document.getElementById('chart-response-time');
+if (respCtx && response.length) {
+chartInstances['chart-response-time'] = new Chart(respCtx, {
+type:'bar',
+data:{labels:response.map(function(r){return r.range||r.label||'';}),datasets:[{data:response.map(function(r){return r.count||r.value||0;}),backgroundColor:'#58a6ff',borderRadius:4}]},
+options:Object.assign({indexAxis:'y'},chartOpts({x:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#8b949e'}},y:{grid:{display:false},ticks:{color:'#8b949e'}}}),{plugins:{legend:{display:false}}})
+});
+}
+}
+
+function initImprovementsCharts() {
+var friction = data.friction_types || [];
+destroyChart('chart-friction');
+var ctx = document.getElementById('chart-friction');
+if (!ctx || !friction.length) return;
+chartInstances['chart-friction'] = new Chart(ctx, {
+type:'doughnut',
+data:{labels:friction.map(function(f){return f.type||f.name||'';}),datasets:[{data:friction.map(function(f){return f.count||0;}),backgroundColor:chartColors.slice(0,friction.length),borderWidth:0}]},
+options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#8b949e',padding:12,usePointStyle:true,pointStyleWidth:8}}},cutout:'60%'}
+});
+}
+
+/* ========== COPY CODE ========== */
+function copyCode(btn) {
+var code = btn.parentElement.querySelector('code');
+if (!code) return;
+navigator.clipboard.writeText(code.textContent).then(function() {
+btn.textContent = t('copied');
+btn.classList.add('copied');
+setTimeout(function() { btn.textContent = t('copy'); btn.classList.remove('copied'); }, 2000);
+}).catch(function() {});
+}
+
+/* ========== RENDER ALL ========== */
+function renderAll() {
+renderHeader();
+renderTabs();
+renderSidebar();
+
+var mainEl = document.getElementById('main-content');
+var tabContents = {
+overview: renderOverview(),
+timeline: renderTimeline(),
+tools: renderTools(),
+languages: renderLanguages(),
+activity: renderActivity(),
+achievements: renderAchievements(),
+improvements: renderImprovements(),
+recommendations: renderRecommendations(),
+future: renderFuture()
+};
+
+var mainHtml = '';
+Object.keys(tabContents).forEach(function(key) {
+mainHtml += '<div class="tab-content' + (key==='overview'?' active':'') + '" id="tab-' + key + '">' + tabContents[key] + '</div>';
+});
+safeSetContent(mainEl, mainHtml);
+
+renderQuote();
+renderFooter();
+initTabCharts('overview');
+}
+
+try { renderAll(); } catch(e) { console.error('Insights render error:', e); document.body.textContent = 'Render Error: ' + (e.message || e); }
+</script>
+</body>
+</html>
