@@ -1,5 +1,5 @@
 {
   "name": "insights-ui",
-  "version": "2.0.0",
-  "description": "Transform Claude Code Insights report into a dark-mode dashboard (English / Korean)"
+  "version": "2.1.0",
+  "description": "Transform Claude Code Insights report into a dark-mode dashboard + MP4 video (English / Korean)"
 }
