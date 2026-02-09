@@ -1,4 +1,4 @@
-# /insights-ui
+# /builder
 
 Transform Claude Code Insights report (report.html) into a dark-mode dashboard.
 Supports English and Korean with full content translation.
