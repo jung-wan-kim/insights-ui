@@ -6,11 +6,11 @@
 
 ## 대시보드
 
-![대시보드 미리보기](https://github.com/jung-wan-kim/insights-ui/blob/main/docs/dashboard-ko.png?raw=true)
+![대시보드 미리보기](docs/dashboard-ko.png)
 
 ## 영상
 
-![데모 영상](https://github.com/jung-wan-kim/insights-ui/blob/main/docs/demo-video.gif?raw=true)
+![데모 영상](docs/demo-video.gif)
 
 ## 주요 기능
 

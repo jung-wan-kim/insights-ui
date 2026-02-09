@@ -6,11 +6,11 @@
 
 ## Dashboard
 
-![Dashboard Preview](https://github.com/jung-wan-kim/insights-ui/blob/main/docs/dashboard-en.png?raw=true)
+![Dashboard Preview](docs/dashboard-en.png)
 
 ## Video
 
-![Demo Video](https://github.com/jung-wan-kim/insights-ui/blob/main/docs/demo-video.gif?raw=true)
+![Demo Video](docs/demo-video.gif)
 
 ## Features
 
