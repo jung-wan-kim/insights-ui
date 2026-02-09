@@ -249,6 +249,97 @@
       .grid-2 { grid-template-columns: 1fr; }
       .donut-wrap { flex-direction: column; }
     }
+
+    /* ── Interactive Styles ── */
+
+    /* Scroll spy active states */
+    .nav-link.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .sidebar-link.active { background: rgba(99,102,241,0.2); color: var(--accent); font-weight: 600; }
+
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
+
+    /* Bar chart hover */
+    .bar-row { position: relative; cursor: default; transition: transform 0.15s; }
+    .bar-row:hover { transform: translateX(4px); }
+    .bar-row:hover .bar-fill { filter: brightness(1.3); }
+    .bar-tooltip {
+      position: absolute; right: 60px; top: -28px; background: var(--text-bright); color: var(--bg);
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10;
+    }
+    .bar-tooltip::after {
+      content: ''; position: absolute; top: 100%; right: 20px;
+      border: 4px solid transparent; border-top-color: var(--text-bright);
+    }
+    .bar-row:hover .bar-tooltip { opacity: 1; }
+
+    /* Donut chart hover */
+    .donut-wrap svg circle { transition: stroke-width 0.2s, opacity 0.2s; cursor: pointer; }
+    .donut-wrap.hover-active svg circle:not(.donut-bg) { opacity: 0.3; }
+    .donut-wrap.hover-active svg circle.highlight { opacity: 1; stroke-width: 20; }
+    .legend-item { cursor: pointer; transition: opacity 0.2s; padding: 2px 4px; border-radius: 4px; }
+    .legend-item:hover { background: rgba(255,255,255,0.05); }
+    .donut-wrap.hover-active .legend-item { opacity: 0.4; }
+    .donut-wrap.hover-active .legend-item.highlight { opacity: 1; font-weight: 600; }
+
+    /* Card collapse/expand */
+    .collapsible-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .collapse-chevron {
+      font-size: 12px; color: var(--text-dim); transition: transform 0.3s;
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .collapse-chevron:hover { background: rgba(255,255,255,0.1); }
+    .collapsible-body {
+      max-height: 2000px; overflow: hidden; transition: max-height 0.4s ease-out, opacity 0.3s;
+      opacity: 1;
+    }
+    .collapsed .collapsible-body { max-height: 0; opacity: 0; }
+    .collapsed .collapse-chevron { transform: rotate(-90deg); }
+
+    /* Sort toggle */
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim);
+      cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
+      background: transparent; transition: all 0.2s; margin-left: 8px;
+    }
+    .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sort-btn .sort-icon { transition: transform 0.2s; }
+    .sort-btn.desc .sort-icon { transform: rotate(180deg); }
+
+    /* Print button */
+    .print-btn {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent); color: white; border: none;
+      font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: all 0.2s;
+    }
+    .print-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
+
+    /* Hero counter animation */
+    .hero-stat .val { transition: color 0.3s; }
+
+    /* Print styles */
+    @media print {
+      body { background: white; color: #1a1a1a; }
+      .nav-bar, .sidebar, .print-btn { display: none !important; }
+      .dashboard-wrap { grid-template-columns: 1fr !important; }
+      .main-content { padding: 0 !important; }
+      .card, .win-card, .friction-card, .horizon-card, .feature-card, .glance, .fun-ending {
+        background: white !important; border: 1px solid #ddd !important; break-inside: avoid;
+      }
+      .section-title, .chart-title, .win-title, .friction-title, .horizon-title, .feature-title,
+      .glance-title, .fun-headline, .hero h1 { color: #1a1a1a !important; }
+      .section-desc, .bar-label, .bar-value, .win-desc, .friction-desc, .horizon-desc,
+      .feature-desc, .feature-why, .fun-detail, .glance-item, .hero .subtitle { color: #444 !important; }
+      .bar-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .hero { background: white !important; border-bottom: 2px solid #ddd !important; }
+      .hero-stat { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+      .hero-stat .val { color: #1a1a1a !important; }
+      .collapsed .collapsible-body { max-height: 2000px !important; opacity: 1 !important; }
+    }
   </style>
 </head>
 <body>
@@ -565,6 +656,214 @@
   </div>
   </main>
 </div>
+
+<!-- Print Button -->
+<button class="print-btn" onclick="window.print()" title="Print">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+  </svg>
+</button>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── 1. Scroll Spy ──
+  var sections = document.querySelectorAll('.section[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
+  var sidebarLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var id = entry.target.id;
+        navLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+        sidebarLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(function(section) { observer.observe(section); });
+
+  // ── 2. Animated Counters ──
+  var heroVals = document.querySelectorAll('.hero-stat .val');
+  var counted = false;
+
+  function animateCounter(el, target, duration) {
+    var start = 0;
+    var startTime = null;
+    var locale = document.documentElement.lang === 'ko' ? 'ko-KR' : 'en-US';
+
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.floor(eased * target);
+      el.textContent = current.toLocaleString(locale);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var heroObserver = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !counted) {
+      counted = true;
+      heroVals.forEach(function(el) {
+        var text = el.textContent.replace(/,/g, '');
+        var target = parseInt(text) || 0;
+        if (target > 0) animateCounter(el, target, 1500);
+      });
+    }
+  }, { threshold: 0.5 });
+
+  var hero = document.querySelector('.hero');
+  if (hero) heroObserver.observe(hero);
+
+  // ── 3. Bar Chart Tooltips ──
+  document.querySelectorAll('.bar-row').forEach(function(row) {
+    var valueEl = row.querySelector('.bar-value');
+    var fillEl = row.querySelector('.bar-fill');
+    if (!valueEl || !fillEl) return;
+
+    var card = row.closest('.card');
+    if (!card) return;
+
+    var allRows = card.querySelectorAll('.bar-row');
+    var total = 0;
+    allRows.forEach(function(r) {
+      var v = r.querySelector('.bar-value');
+      if (v) total += parseInt(v.textContent.replace(/,/g, '')) || 0;
+    });
+
+    var value = parseInt(valueEl.textContent.replace(/,/g, '')) || 0;
+    var pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'bar-tooltip';
+    tooltip.textContent = pct + '%';
+    row.appendChild(tooltip);
+  });
+
+  // ── 4. Donut Chart Interaction ──
+  document.querySelectorAll('.donut-wrap').forEach(function(wrap) {
+    var allCircles = wrap.querySelectorAll('svg circle');
+    var legends = wrap.querySelectorAll('.legend-item');
+
+    var dataCircles = [];
+    allCircles.forEach(function(c) {
+      if (c.getAttribute('stroke') !== 'rgba(255,255,255,0.05)') {
+        dataCircles.push(c);
+      }
+    });
+
+    function highlightSegment(index) {
+      wrap.classList.add('hover-active');
+      dataCircles.forEach(function(c, i) {
+        c.classList.toggle('highlight', i === index);
+      });
+      legends.forEach(function(l, i) {
+        l.classList.toggle('highlight', i === index);
+      });
+    }
+
+    function clearHighlight() {
+      wrap.classList.remove('hover-active');
+      dataCircles.forEach(function(c) { c.classList.remove('highlight'); });
+      legends.forEach(function(l) { l.classList.remove('highlight'); });
+    }
+
+    dataCircles.forEach(function(circle, i) {
+      circle.addEventListener('mouseenter', function() { highlightSegment(i); });
+      circle.addEventListener('mouseleave', clearHighlight);
+    });
+
+    legends.forEach(function(legend, i) {
+      legend.addEventListener('mouseenter', function() { highlightSegment(i); });
+      legend.addEventListener('mouseleave', clearHighlight);
+    });
+  });
+
+  // ── 5. Bar Chart Sort Toggle ──
+  document.querySelectorAll('.chart-title').forEach(function(title) {
+    var card = title.closest('.card');
+    if (!card) return;
+    var rows = card.querySelectorAll('.bar-row');
+    if (rows.length < 2) return;
+
+    var btn = document.createElement('button');
+    btn.className = 'sort-btn';
+    btn.setAttribute('data-order', 'desc');
+
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'sort-icon';
+    iconSpan.textContent = '\u25B2';
+    btn.appendChild(iconSpan);
+    btn.appendChild(document.createTextNode(' Sort'));
+    title.appendChild(btn);
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var order = btn.getAttribute('data-order');
+      var container = rows[0].parentNode;
+      var arr = Array.from(container.querySelectorAll('.bar-row'));
+
+      arr.sort(function(a, b) {
+        var va = parseInt(a.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        var vb = parseInt(b.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        return order === 'desc' ? va - vb : vb - va;
+      });
+
+      arr.forEach(function(row) { container.appendChild(row); });
+      var newOrder = order === 'desc' ? 'asc' : 'desc';
+      btn.setAttribute('data-order', newOrder);
+      btn.classList.toggle('desc', newOrder === 'desc');
+    });
+  });
+
+  // ── 6. Card Collapse/Expand ──
+  var cardTypes = [
+    { selector: '.win-card', titleSel: '.win-title' },
+    { selector: '.friction-card', titleSel: '.friction-title' },
+    { selector: '.feature-card', titleSel: '.feature-title' },
+    { selector: '.horizon-card', titleSel: '.horizon-title' }
+  ];
+
+  cardTypes.forEach(function(type) {
+    document.querySelectorAll(type.selector).forEach(function(card) {
+      var title = card.querySelector(type.titleSel);
+      if (!title) return;
+
+      var header = document.createElement('div');
+      header.className = 'collapsible-header';
+
+      var chevron = document.createElement('span');
+      chevron.className = 'collapse-chevron';
+      chevron.textContent = '\u25BC';
+
+      title.parentNode.insertBefore(header, title);
+      header.appendChild(title);
+      header.appendChild(chevron);
+
+      var body = document.createElement('div');
+      body.className = 'collapsible-body';
+
+      while (header.nextSibling) {
+        body.appendChild(header.nextSibling);
+      }
+      card.appendChild(body);
+
+      header.addEventListener('click', function() {
+        card.classList.toggle('collapsed');
+      });
+    });
+  });
+
+})();
+</script>
 
 </body>
 </html>
