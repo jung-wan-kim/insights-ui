@@ -10,7 +10,7 @@
 
 ## 영상
 
-![데모 영상](https://i.imgur.com/Jxj49Gd.gif)
+<img src="https://i.imgur.com/BeVIJZJ.gif" width="100%" alt="데모 영상">
 
 ## 주요 기능
 
