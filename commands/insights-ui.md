@@ -2,12 +2,15 @@
 
 Transform Claude Code Insights report (report.html) into a dark-mode dashboard.
 Supports English and Korean with full content translation.
+Optionally generates an MP4 video summary using Remotion.
 
 ## Steps
 
-1. First, ask the user to select a language using AskUserQuestion:
-   - Question: "Which language for the insights dashboard?"
-   - Options: "English (en)" and "Korean (ko)"
+1. First, ask the user TWO questions using AskUserQuestion:
+   - Question 1: "Which language for the insights dashboard?"
+     - Options: "English (en)" and "Korean (ko)"
+   - Question 2: "Generate a video summary too?"
+     - Options: "Yes - Dashboard + MP4 video" and "No - Dashboard only"
 
 2. Run `/insights` to generate the base report.html if it doesn't already exist at `~/.claude/usage-data/report.html`.
 
@@ -17,6 +20,11 @@ Supports English and Korean with full content translation.
 Run the transform script directly (no translation needed):
 ```bash
 node ${CLAUDE_PLUGIN_ROOT}/scripts/transform-report.js --lang en
+```
+
+If video was requested, also extract JSON data for video:
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/transform-report.js --extract --out /tmp/insights-data-en.json
 ```
 
 ### For Korean (ko):
@@ -66,6 +74,33 @@ open ~/.claude/usage-data/report-en.html
 For Korean:
 ```bash
 open ~/.claude/usage-data/report-ko.html
+```
+
+5. If the user requested video generation, proceed with the video steps below. Otherwise, stop here.
+
+## Video Generation
+
+### Step V1: Install video dependencies (first time only)
+Check if `${CLAUDE_PLUGIN_ROOT}/video/node_modules` exists. If not, install:
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/video && npm install
+```
+
+### Step V2: Render the video
+Determine the JSON props file based on language:
+- English: `/tmp/insights-data-en.json`
+- Korean: `/tmp/insights-data-ko.json`
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/video && npx remotion render InsightsVideo out/insights.mp4 --props <JSON_PATH>
+```
+
+This renders a 30-second 1080p MP4 video with animated scenes (stats, tools, languages, wins, insights).
+
+### Step V3: Copy output and open
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/video/out/insights.mp4 ~/.claude/usage-data/insights-video.mp4
+open ~/.claude/usage-data/insights-video.mp4
 ```
 
 ## allowed-tools
