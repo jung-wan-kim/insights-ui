@@ -374,8 +374,9 @@ const EndingScene: React.FC<{ data: InsightsData }> = ({ data }) => {
 };
 
 // ── Main Composition ──
-export const InsightsVideo: React.FC<{ data: InsightsData }> = ({ data }) => {
-  if (!data) {
+export const InsightsVideo: React.FC<InsightsData> = (props) => {
+  const data = props;
+  if (!data.totalMessages) {
     return (
       <AbsoluteFill style={{ ...baseStyle, background: BG, justifyContent: "center", alignItems: "center" }}>
         <div style={{ fontSize: 32, color: MUTED }}>
