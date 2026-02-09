@@ -1,0 +1,28 @@
+{
+  "name": "insights-ui",
+  "owner": {
+    "name": "jung-wan-kim",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Transform Claude Code Insights into a dark-mode dashboard + MP4 video",
+    "version": "2.1.0"
+  },
+  "plugins": [
+    {
+      "name": "insights-ui",
+      "source": "./",
+      "description": "Converts Claude Code Insights report.html into a beautiful dark-mode interactive dashboard (English/Korean) with optional Remotion-powered MP4 video generation featuring particle effects and dynamic animations.",
+      "category": "visualization",
+      "tags": [
+        "insights",
+        "dashboard",
+        "video",
+        "remotion",
+        "visualization",
+        "korean"
+      ]
+    }
+  ],
+  "version": "2.1.0"
+}

@@ -1,5 +1,20 @@
 {
   "name": "insights-ui",
   "version": "2.1.0",
-  "description": "Transform Claude Code Insights report into a dark-mode dashboard + MP4 video (English / Korean)"
+  "description": "Transform Claude Code Insights report into a dark-mode dashboard + MP4 video (English / Korean)",
+  "author": {
+    "name": "jung-wan-kim"
+  },
+  "homepage": "https://github.com/jung-wan-kim/insights-ui",
+  "repository": "https://github.com/jung-wan-kim/insights-ui",
+  "license": "MIT",
+  "keywords": [
+    "insights",
+    "dashboard",
+    "video",
+    "remotion",
+    "visualization",
+    "korean",
+    "english"
+  ]
 }
