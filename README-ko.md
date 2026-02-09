@@ -6,11 +6,11 @@
 
 ## 대시보드
 
-![대시보드 미리보기](docs/dashboard-ko.png)
+![대시보드 미리보기](https://i.imgur.com/Kz2bBEu.png)
 
 ## 영상
 
-![데모 영상](docs/demo-video.gif)
+![데모 영상](https://i.imgur.com/C9n5Ozm.gif)
 
 ## 주요 기능
 
