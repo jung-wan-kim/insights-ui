@@ -232,6 +232,18 @@ const StatsScene: React.FC<{ data: InsightsData }> = ({ data }) => {
       <ParticleField count={50} color={CYAN} speed={1.2} seed={2} />
       <SpeedLines direction="right" intensity={0.5} />
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
+        <div
+          style={{
+            fontSize: 46,
+            fontWeight: 800,
+            marginBottom: 50,
+            opacity: spring({ frame, fps }),
+            letterSpacing: -1,
+            textShadow: `0 0 20px ${CYAN}60`,
+          }}
+        >
+          Overview
+        </div>
         <div style={{ display: "flex", gap: 30 }}>
           {items.map((item, i) => {
             const delay = i * 6;
