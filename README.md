@@ -18,7 +18,6 @@
 - Bilingual support (English / Korean with full content translation)
 - MP4 video generation with particle effects and dynamic animations (Remotion)
 - Scroll spy navigation, collapsible sections, sortable charts
-- Print-friendly layout
 
 ## Installation
 

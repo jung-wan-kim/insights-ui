@@ -308,38 +308,10 @@
     .sort-btn .sort-icon { transition: transform 0.2s; }
     .sort-btn.desc .sort-icon { transform: rotate(180deg); }
 
-    /* Print button */
-    .print-btn {
-      position: fixed; bottom: 24px; right: 24px; z-index: 200;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: var(--accent); color: white; border: none;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: all 0.2s;
-    }
-    .print-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
 
     /* Hero counter animation */
     .hero-stat .val { transition: color 0.3s; }
 
-    /* Print styles */
-    @media print {
-      body { background: white; color: #1a1a1a; }
-      .nav-bar, .sidebar, .print-btn { display: none !important; }
-      .dashboard-wrap { grid-template-columns: 1fr !important; }
-      .main-content { padding: 0 !important; }
-      .card, .win-card, .friction-card, .horizon-card, .feature-card, .glance, .fun-ending {
-        background: white !important; border: 1px solid #ddd !important; break-inside: avoid;
-      }
-      .section-title, .chart-title, .win-title, .friction-title, .horizon-title, .feature-title,
-      .glance-title, .fun-headline, .hero h1 { color: #1a1a1a !important; }
-      .section-desc, .bar-label, .bar-value, .win-desc, .friction-desc, .horizon-desc,
-      .feature-desc, .feature-why, .fun-detail, .glance-item, .hero .subtitle { color: #444 !important; }
-      .bar-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      .hero { background: white !important; border-bottom: 2px solid #ddd !important; }
-      .hero-stat { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
-      .hero-stat .val { color: #1a1a1a !important; }
-      .collapsed .collapsible-body { max-height: 2000px !important; opacity: 1 !important; }
-    }
   </style>
 </head>
 <body>
@@ -657,12 +629,6 @@
   </main>
 </div>
 
-<!-- Print Button -->
-<button class="print-btn" onclick="window.print()" title="인쇄">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-  </svg>
-</button>
 
 <script>
 (function() {
