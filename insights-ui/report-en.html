@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Claude Code Insights Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1c2129;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-dim: #8b949e;
+      --text-bright: #f0f6fc;
+      --accent: #2f81f7;
+      --accent2: #388bfd;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --cyan: #39d2c0;
+      --pink: #db61a2;
+      --orange: #f0883e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-padding-top: 60px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+      padding: 32px 24px 24px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+    .hero h1 { font-size: 28px; font-weight: 700; color: var(--text-bright); margin-bottom: 4px; letter-spacing: -0.5px; }
+    .hero .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 10px;
+    }
+    .hero-stat .val { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+    .hero-stat .lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* Dashboard Layout */
+    .dashboard-wrap {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 140px);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .sidebar {
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      scrollbar-width: thin;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .main-content { padding: 16px 24px; overflow-y: auto; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    @media (max-width: 1024px) {
+      .dashboard-wrap { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* Navigation */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 0;
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav-link {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Sidebar */
+    .sidebar-section { margin-bottom: 16px; }
+    .sidebar-title {
+      font-size: 11px; font-weight: 700; color: var(--text-bright);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-stat {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .sidebar-stat-label { font-size: 11px; color: var(--text-dim); }
+    .sidebar-stat-value { font-size: 12px; font-weight: 600; color: var(--text); }
+    .sidebar-link {
+      display: block; padding: 6px 8px; font-size: 11px; color: var(--text-dim);
+      text-decoration: none; border-radius: 4px; margin-bottom: 2px; transition: all 0.2s;
+    }
+    .sidebar-link:hover { background: rgba(99,102,241,0.15); color: var(--accent); }
+    .sidebar-highlight {
+      background: rgba(99,102,241,0.1); border-radius: 6px; padding: 10px; margin-bottom: 12px;
+    }
+    .sidebar-highlight-title { font-size: 10px; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+    .sidebar-highlight-text { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+    /* Section */
+    .section { padding: 12px 0; }
+    .section-title {
+      font-size: 18px; font-weight: 700; color: var(--text-bright);
+      margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .icon { font-size: 20px; }
+    .section-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; margin-bottom: 8px; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Glance */
+    .glance {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 16px; margin: 8px auto 12px; max-width: 1200px;
+    }
+    .glance-title { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 8px; }
+    .glance-item { margin-bottom: 6px; font-size: 12px; line-height: 1.5; color: var(--text); }
+    .glance-item strong { color: var(--accent); }
+
+    /* Charts */
+    .chart-title {
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+    .bar-row { display: flex; align-items: center; margin-bottom: 8px; }
+    .bar-label {
+      width: 100px; font-size: 12px; color: var(--text-dim); flex-shrink: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .bar-track {
+      flex: 1; height: 8px; background: rgba(255,255,255,0.05);
+      border-radius: 4px; margin: 0 10px; overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+    .bar-value { width: 55px; font-size: 12px; font-weight: 600; color: var(--text); text-align: right; }
+
+    /* Donut */
+    .donut-wrap { display: flex; align-items: center; gap: 24px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Win cards */
+    .win-card {
+      background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.05) 100%);
+      border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .win-title { font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 4px; }
+    .win-desc { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+    /* Friction cards */
+    .friction-card {
+      background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(236,72,153,0.05) 100%);
+      border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .friction-title { font-size: 13px; font-weight: 600; color: #fca5a5; margin-bottom: 4px; }
+    .friction-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .friction-examples { margin: 0 0 0 12px; }
+    .friction-examples li { font-size: 11px; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+
+    /* Horizon cards */
+    .horizon-card {
+      background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(236,72,153,0.06) 100%);
+      border: 1px solid rgba(139,92,246,0.25); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .horizon-title { font-size: 13px; font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+    .horizon-desc { font-size: 11px; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+    .horizon-tip {
+      background: rgba(139,92,246,0.12); border-radius: 6px; padding: 8px 10px;
+      font-size: 11px; color: #c4b5fd; line-height: 1.4;
+    }
+
+    /* Feature cards */
+    .feature-card {
+      background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(99,102,241,0.06) 100%);
+      border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .feature-title { font-size: 13px; font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+    .feature-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .feature-why { font-size: 11px; color: var(--text); line-height: 1.4; }
+
+    /* Fun ending */
+    .fun-ending {
+      text-align: center; padding: 20px; margin-top: 16px;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(239,68,68,0.06) 100%);
+      border-radius: 16px; border: 1px solid rgba(245,158,11,0.2);
+    }
+    .fun-headline { font-size: 16px; font-weight: 700; color: #fcd34d; margin-bottom: 12px; }
+    .fun-detail { font-size: 12px; color: var(--text-dim); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .donut-wrap { flex-direction: column; }
+    }
+
+    /* ── Interactive Styles ── */
+
+    /* Scroll spy active states */
+    .nav-link.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .sidebar-link.active { background: rgba(99,102,241,0.2); color: var(--accent); font-weight: 600; }
+
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
+
+    /* Bar chart hover */
+    .bar-row { position: relative; cursor: default; transition: transform 0.15s; }
+    .bar-row:hover { transform: translateX(4px); }
+    .bar-row:hover .bar-fill { filter: brightness(1.3); }
+    .bar-tooltip {
+      position: absolute; right: 60px; top: -28px; background: var(--text-bright); color: var(--bg);
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10;
+    }
+    .bar-tooltip::after {
+      content: ''; position: absolute; top: 100%; right: 20px;
+      border: 4px solid transparent; border-top-color: var(--text-bright);
+    }
+    .bar-row:hover .bar-tooltip { opacity: 1; }
+
+    /* Donut chart hover */
+    .donut-wrap svg circle { transition: stroke-width 0.2s, opacity 0.2s; cursor: pointer; }
+    .donut-wrap.hover-active svg circle:not(.donut-bg) { opacity: 0.3; }
+    .donut-wrap.hover-active svg circle.highlight { opacity: 1; stroke-width: 20; }
+    .legend-item { cursor: pointer; transition: opacity 0.2s; padding: 2px 4px; border-radius: 4px; }
+    .legend-item:hover { background: rgba(255,255,255,0.05); }
+    .donut-wrap.hover-active .legend-item { opacity: 0.4; }
+    .donut-wrap.hover-active .legend-item.highlight { opacity: 1; font-weight: 600; }
+
+    /* Card collapse/expand */
+    .collapsible-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .collapse-chevron {
+      font-size: 12px; color: var(--text-dim); transition: transform 0.3s;
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .collapse-chevron:hover { background: rgba(255,255,255,0.1); }
+    .collapsible-body {
+      max-height: 2000px; overflow: hidden; transition: max-height 0.4s ease-out, opacity 0.3s;
+      opacity: 1;
+    }
+    .collapsed .collapsible-body { max-height: 0; opacity: 0; }
+    .collapsed .collapse-chevron { transform: rotate(-90deg); }
+
+    /* Sort toggle */
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim);
+      cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
+      background: transparent; transition: all 0.2s; margin-left: 8px;
+    }
+    .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sort-btn .sort-icon { transition: transform 0.2s; }
+    .sort-btn.desc .sort-icon { transform: rotate(180deg); }
+
+
+    /* Hero counter animation */
+    .hero-stat .val { transition: color 0.3s; }
+
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>Claude Code Insights</h1>
+    <p class="subtitle">2026-01-02 to 2026-02-05 | 35 days of development</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="val">4,750</div>
+        <div class="lbl">Sessions</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">33,485</div>
+        <div class="lbl">Messages</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">10,983</div>
+        <div class="lbl">Files</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">35</div>
+        <div class="lbl">Days</div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:11px; color:var(--text-dim);">
+      <span>Avg <strong style="color:var(--text);">190.0</strong> sessions/day</span>
+      <span>|</span>
+      <span>Avg <strong style="color:var(--text);">1339.4</strong> msgs/day</span>
+      <span>|</span>
+      <span style="color:var(--green);">+1,594,401</span> / <span style="color:var(--red);">-210,844</span> lines
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <a href="#overview" class="nav-link">Overview</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#languages" class="nav-link">Languages</a>
+    <a href="#activity" class="nav-link">Activity</a>
+    <a href="#wins" class="nav-link">Wins</a>
+    <a href="#friction" class="nav-link">Friction</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#horizon" class="nav-link">Horizon</a>
+  </div>
+</nav>
+
+<!-- Dashboard Layout -->
+<div class="dashboard-wrap">
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Key Metrics</div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Sessions</span><span class="sidebar-stat-value">4,750</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Messages</span><span class="sidebar-stat-value">33,485</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Files</span><span class="sidebar-stat-value">10,983</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Tool Calls</span><span class="sidebar-stat-value">160,499</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Lines Changed</span><span class="sidebar-stat-value" style="color:var(--green)">+1,594,401 / <span style="color:var(--red)">-210,844</span></span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Summary</div>
+      <div class="sidebar-highlight">
+        <div class="sidebar-highlight-title">What's Working</div>
+        <div class="sidebar-highlight-text">You have a strong research-first approach to complex work — like systematically having Claude explore your match-system codebase before weaving AI image analysis into investment proposal content. When things hit walls (like the Vercel deployment saga), you show good instincts for pivoting to alternative approaches rather than giving up, and your contained UI tasks like the speed button swap go smoothly because you scope them well.</div>
+      </div>
+      <div class="sidebar-highlight" style="background:rgba(248,81,73,0.1);">
+        <div class="sidebar-highlight-title" style="color:var(--red);">Needs Improvement</div>
+        <div class="sidebar-highlight-text">On Claude's side, it struggles badly with platform-specific UI navigation it can't actually see — the Vercel deployment burned significant time on wrong dashboard instructions before the API workaround landed. On your side, your content-heavy PPT sessions tend to stall in open-ended research mode without producing a finished deliverable, and observer/memory sessions often end with exploration but no concrete artifact to show for it.</div>
+      </div>
+      <div class="sidebar-highlight" style="background:rgba(52,211,153,0.1);">
+        <div class="sidebar-highlight-title" style="color:var(--green);">Quick Wins</div>
+        <div class="sidebar-highlight-text">Try creating a custom skill (via `/command`) for your recurring PPT enhancement workflow that forces a two-phase structure: research first, then generate content — so Claude doesn't spend the whole session exploring. Also look into task agents for your cross-system analysis work, where one sub-agent maps the codebase while another drafts the actual deliverable in parallel.</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Top 5 Tools</div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Bash</span><span class="sidebar-stat-value">86,847</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Read</span><span class="sidebar-stat-value">32,057</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Edit</span><span class="sidebar-stat-value">20,817</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">TaskUpdate</span><span class="sidebar-stat-value">8,118</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Write</span><span class="sidebar-stat-value">6,639</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Languages</div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">HTML</span><span class="sidebar-stat-value">17,244</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">TypeScript</span><span class="sidebar-stat-value">10,616</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Markdown</span><span class="sidebar-stat-value">8,189</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">JSON</span><span class="sidebar-stat-value">4,309</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Java</span><span class="sidebar-stat-value">3,445</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Navigate</div>
+      <a href="#overview" class="sidebar-link">Overview</a>
+      <a href="#tools" class="sidebar-link">Tool Usage</a>
+      <a href="#activity" class="sidebar-link">Activity Patterns</a>
+      <a href="#wins" class="sidebar-link">Big Wins</a>
+      <a href="#friction" class="sidebar-link">Friction Points</a>
+      <a href="#features" class="sidebar-link">Recommended Features</a>
+      <a href="#horizon" class="sidebar-link">Future Horizon</a>
+    </div>
+  </aside>
+
+  <!-- Right Main Content -->
+  <main class="main-content">
+  <div class="container">
+
+    <!-- Overview -->
+    <div class="section" id="overview">
+      <div class="section-title"><span class="icon">Overview</span></div>
+      <div class="section-desc">Comprehensive analysis based on 35 days of Claude Code usage data.</div>
+
+      <div style="background: rgba(99,102,241,0.1); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: var(--accent); margin-bottom: 8px;">
+        <strong>Key Pattern:</strong> Key pattern: You run Claude Code as a massively parallelized automation engine for infrastructure and deployment tasks, intervening manually only for creative or ambiguous goals, which leads to high throughput but frequent wrong-approach friction due to minimal upfront guidance.
+      </div>
+
+      <!-- At a Glance -->
+      <div class="glance">
+        <div class="glance-title">At a Glance</div>
+        <div class="glance-item"><strong>What's Working:</strong> You have a strong research-first approach to complex work — like systematically having Claude explore your match-system codebase before weaving AI image analysis into investment proposal content. When things hit walls (like the Vercel deployment saga), you show good instincts for pivoting to alternative approaches rather than giving up, and your contained UI tasks like the speed button swap go smoothly because you scope them well.</div>
+        <div class="glance-item"><strong>Needs Improvement:</strong> On Claude's side, it struggles badly with platform-specific UI navigation it can't actually see — the Vercel deployment burned significant time on wrong dashboard instructions before the API workaround landed. On your side, your content-heavy PPT sessions tend to stall in open-ended research mode without producing a finished deliverable, and observer/memory sessions often end with exploration but no concrete artifact to show for it.</div>
+        <div class="glance-item"><strong>Quick Wins:</strong> Try creating a custom skill (via `/command`) for your recurring PPT enhancement workflow that forces a two-phase structure: research first, then generate content — so Claude doesn't spend the whole session exploring. Also look into task agents for your cross-system analysis work, where one sub-agent maps the codebase while another drafts the actual deliverable in parallel.</div>
+        <div class="glance-item"><strong>Ambitious Workflows:</strong> As models get more capable, your Vercel-style deployment friction should vanish — imagine Claude autonomously attempting configs via API, running verification checks, and self-correcting without you needing to course-correct through multiple cycles. Your research-then-execute PPT work is also ripe for parallel agent orchestration, where coordinated sub-agents handle codebase discovery and content generation simultaneously and merge results into a finished artifact in one shot.</div>
+      </div>
+
+      <!-- Project Areas -->
+      <div class="card">
+        <div class="chart-title">Project Areas</div>
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">Vercel Deployment & Configuration</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">~1 sessions</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Deploying a Next.js monorepo to Vercel from a development branch, including configuring the Root Directory setting. Claude struggled with incorrect dashboard navigation instructions but ultimately resolved the issue by using the Vercel API directly.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">TIPS Investment Proposal Enhancement</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">~3 sessions</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Enhancing PowerPoint presentation content for a TIPS investment proposal, specifically connecting match-system AI image analysis and labeling capabilities to brand strategy as a differentiating feature. Claude explored the codebase extensively to understand the system, though several sessions were truncated before full completion.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">Interactive Web UI Development</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">~1 sessions</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Modifying an HTML-based branch workflow visualization, replacing a speed slider with a simplified x2 speed button. Claude made targeted HTML, CSS, and JavaScript edits quickly and accurately across the file.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">Local Development Environment & Tooling</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">~2 sessions</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Investigating Claude Code installation methods and consolidating npm local setup with Claude configuration. Sessions covered checking whether brew remains the recommended installer and exploring config integration options, though resolution was limited.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">Automated Workflow Observation & Memory</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">~1 sessions</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Configuring a Claude-Mem observer agent to watch and capture context from git workflow sessions. The session involved codebase exploration as a monitoring baseline but no substantive changes were made before the checkpoint.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="section" id="tools">
+      <div class="section-title"><span class="icon">Tool Usage</span></div>
+      <div class="section-desc">Most frequently used tools and their distribution.</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">Tool Rankings</div>
+      <div class="bar-row">
+        <div class="bar-label">Bash</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#0891b2"></div></div>
+        <div class="bar-value">86,847</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Read</div>
+        <div class="bar-track"><div class="bar-fill" style="width:36.9%;background:#0891b2"></div></div>
+        <div class="bar-value">32,057</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Edit</div>
+        <div class="bar-track"><div class="bar-fill" style="width:24.0%;background:#0891b2"></div></div>
+        <div class="bar-value">20,817</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">TaskUpdate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:9.3%;background:#0891b2"></div></div>
+        <div class="bar-value">8,118</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Write</div>
+        <div class="bar-track"><div class="bar-fill" style="width:7.6%;background:#0891b2"></div></div>
+        <div class="bar-value">6,639</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">TaskCreate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:6.9%;background:#0891b2"></div></div>
+        <div class="bar-value">6,021</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Tool Distribution</div>
+<div class="donut-wrap">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#2f81f7" stroke-width="16" stroke-dasharray="176.79325919399204 149.93237677934647" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#388bfd" stroke-width="16" stroke-dasharray="65.25799981555843 261.4676361577801" stroke-dashoffset="-176.79325919399204" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#39d2c0" stroke-width="16" stroke-dasharray="42.37688436723585 284.34875160610267" stroke-dashoffset="-242.05125900955048" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#3fb950" stroke-width="16" stroke-dasharray="16.52570242077248 310.19993355256605" stroke-dashoffset="-284.42814337678635" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#f0883e" stroke-width="16" stroke-dasharray="13.514922194075941 313.21071377926256" stroke-dashoffset="-300.9538457975588" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#db61a2" stroke-width="16" stroke-dasharray="12.256867981703756 314.46876799163476" stroke-dashoffset="-314.46876799163476" transform="rotate(-90 60 60)"/>
+    <text x="60" y="56" text-anchor="middle" fill="#f0f6fc" font-size="18" font-weight="700">160,499</text>
+    <text x="60" y="74" text-anchor="middle" fill="#8b949e" font-size="10">Total</text>
+  </svg>
+    <div class="donut-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#2f81f7"></span>Bash 86,847 (54.1%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#388bfd"></span>Read 32,057 (20.0%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#39d2c0"></span>Edit 20,817 (13.0%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#3fb950"></span>TaskUpdate 8,118 (5.1%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f0883e"></span>Write 6,639 (4.1%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#db61a2"></span>TaskCreate 6,021 (3.8%)</div>
+    </div>
+  </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">Request Types</div>
+      <div class="bar-row">
+        <div class="bar-label">Deployment Configuration</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#2563eb"></div></div>
+        <div class="bar-value">641</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Local Dev Setup</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#2563eb"></div></div>
+        <div class="bar-value">641</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Workflow Rule</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#2563eb"></div></div>
+        <div class="bar-value">641</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Analysis</div>
+        <div class="bar-track"><div class="bar-fill" style="width:8.9%;background:#2563eb"></div></div>
+        <div class="bar-value">57</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Feature Enhancement</div>
+        <div class="bar-track"><div class="bar-fill" style="width:8.9%;background:#2563eb"></div></div>
+        <div class="bar-value">57</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Content Enhancement</div>
+        <div class="bar-track"><div class="bar-fill" style="width:2.2%;background:#2563eb"></div></div>
+        <div class="bar-value">14</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Tool Errors</div>
+      <div class="bar-row">
+        <div class="bar-label">Command Failed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#dc2626"></div></div>
+        <div class="bar-value">6,283</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Other</div>
+        <div class="bar-track"><div class="bar-fill" style="width:37.7%;background:#dc2626"></div></div>
+        <div class="bar-value">2,370</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">File Not Found</div>
+        <div class="bar-track"><div class="bar-fill" style="width:10.3%;background:#dc2626"></div></div>
+        <div class="bar-value">647</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">User Rejected</div>
+        <div class="bar-track"><div class="bar-fill" style="width:5.3%;background:#dc2626"></div></div>
+        <div class="bar-value">333</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">File Too Large</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.9%;background:#dc2626"></div></div>
+        <div class="bar-value">248</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Edit Failed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:2.1%;background:#dc2626"></div></div>
+        <div class="bar-value">129</div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Languages -->
+    <div class="section" id="languages">
+      <div class="section-title"><span class="icon">Languages</span></div>
+      <div class="section-desc">Programming language distribution across sessions.</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">Language Rankings</div>
+      <div class="bar-row">
+        <div class="bar-label">HTML</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#10b981"></div></div>
+        <div class="bar-value">17,244</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">TypeScript</div>
+        <div class="bar-track"><div class="bar-fill" style="width:61.6%;background:#10b981"></div></div>
+        <div class="bar-value">10,616</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Markdown</div>
+        <div class="bar-track"><div class="bar-fill" style="width:47.5%;background:#10b981"></div></div>
+        <div class="bar-value">8,189</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">JSON</div>
+        <div class="bar-track"><div class="bar-fill" style="width:25.0%;background:#10b981"></div></div>
+        <div class="bar-value">4,309</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Java</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#10b981"></div></div>
+        <div class="bar-value">3,445</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">YAML</div>
+        <div class="bar-track"><div class="bar-fill" style="width:19.9%;background:#10b981"></div></div>
+        <div class="bar-value">3,438</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Language Distribution</div>
+<div class="donut-wrap">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#2f81f7" stroke-width="16" stroke-dasharray="119.26201534100144 207.46362063233707" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#388bfd" stroke-width="16" stroke-dasharray="73.42180206796981 253.30383390536872" stroke-dashoffset="-119.26201534100144" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#39d2c0" stroke-width="16" stroke-dasharray="56.63631661026797 270.08931936307056" stroke-dashoffset="-192.68381740897127" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#3fb950" stroke-width="16" stroke-dasharray="29.80167154397908 296.92396442935944" stroke-dashoffset="-249.32013401923922" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#f0883e" stroke-width="16" stroke-dasharray="23.826121714784854 302.89951425855367" stroke-dashoffset="-279.1218055632183" transform="rotate(-90 60 60)"/>
+    <circle cx="60" cy="60" r="52" fill="none" stroke="#db61a2" stroke-width="16" stroke-dasharray="23.777708695335363 302.94792727800314" stroke-dashoffset="-302.94792727800314" transform="rotate(-90 60 60)"/>
+    <text x="60" y="56" text-anchor="middle" fill="#f0f6fc" font-size="18" font-weight="700">47,241</text>
+    <text x="60" y="74" text-anchor="middle" fill="#8b949e" font-size="10">Total</text>
+  </svg>
+    <div class="donut-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#2f81f7"></span>HTML 17,244 (36.5%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#388bfd"></span>TypeScript 10,616 (22.5%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#39d2c0"></span>Markdown 8,189 (17.3%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#3fb950"></span>JSON 4,309 (9.1%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f0883e"></span>Java 3,445 (7.3%)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#db61a2"></span>YAML 3,438 (7.3%)</div>
+    </div>
+  </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">Session Types</div>
+      <div class="bar-row">
+        <div class="bar-label">Iterative Refinement</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">698</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Multi Task</div>
+        <div class="bar-track"><div class="bar-fill" style="width:2.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">14</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Exploration</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.3%;background:#8b5cf6"></div></div>
+        <div class="bar-value">2</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Quick Question</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.1%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Single Task</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.1%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Multi-Clauding</div>
+          <div style="display: flex; gap: 16px; margin: 12px 0;">
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">1,124</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Overlap Events</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">546</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Sessions Involved</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">27%</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Message Ratio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="section" id="activity">
+      <div class="section-title"><span class="icon">Activity Patterns</span></div>
+      <div class="section-desc">Time-of-day activity and response time analysis (PT).</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">Messages by Time of Day</div>
+      <div class="bar-row">
+        <div class="bar-label">Morning (6-12)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:63.8%;background:#8b5cf6"></div></div>
+        <div class="bar-value">10,782</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Afternoon (12-18)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">16,897</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Evening (18-24)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:34.3%;background:#8b5cf6"></div></div>
+        <div class="bar-value">5,803</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Night (0-6)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">3</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Response Time Distribution</div>
+      <div class="bar-row">
+        <div class="bar-label">2-10s</div>
+        <div class="bar-track"><div class="bar-fill" style="width:93.6%;background:#6366f1"></div></div>
+        <div class="bar-value">3,580</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">10-30s</div>
+        <div class="bar-track"><div class="bar-fill" style="width:96.9%;background:#6366f1"></div></div>
+        <div class="bar-value">3,706</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">30s-1m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:92.4%;background:#6366f1"></div></div>
+        <div class="bar-value">3,537</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">1-2m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#6366f1"></div></div>
+        <div class="bar-value">3,826</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">2-5m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:74.3%;background:#6366f1"></div></div>
+        <div class="bar-value">2,842</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">5-15m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:73.6%;background:#6366f1"></div></div>
+        <div class="bar-value">2,816</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">>15m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:22.1%;background:#6366f1"></div></div>
+        <div class="bar-value">844</div>
+      </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+            Median: 57s &bull; Average: 190.3s
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wins -->
+    <div class="section" id="wins">
+      <div class="section-title"><span class="icon">Big Wins</span></div>
+      <div class="section-desc">You're running a massive Claude Code operation across 4,750 sessions with a strong focus on deployment, local dev setup, and workflow automation across a polyglot codebase.</div>
+
+
+      <div class="win-card">
+        <div class="win-title">Persistent Deployment Problem-Solving</div>
+        <div class="win-desc">When deploying your Next.js monorepo to Vercel hit repeated dead ends with incorrect dashboard instructions, you stuck with it and ultimately succeeded by pivoting to the Vercel API to configure the Root Directory correctly. Your willingness to push through friction and find alternative approaches turned a frustrating session into a fully achieved outcome.</div>
+      </div>
+
+
+      <div class="win-card">
+        <div class="win-title">Cross-System Strategic Analysis</div>
+        <div class="win-desc">You're doing sophisticated work connecting your match-system's AI image analysis labeling to brand strategy and investment proposals. Across multiple sessions, you systematically had Claude explore the codebase to understand the system deeply before integrating those insights into presentation content — showing a thoughtful, research-first approach to complex deliverables.</div>
+      </div>
+
+
+      <div class="win-card">
+        <div class="win-title">Browser-Integrated Polyglot Development</div>
+        <div class="win-desc">You've built an impressive workflow spanning HTML, TypeScript, Java, YAML, and more, with over 5,000 browser automation calls via the Chrome MCP plugin alongside heavy Bash and task management usage. Your ability to orchestrate UI changes like the speed button swap alongside deployment configs and content work shows you're leveraging Claude Code as a true full-stack development partner.</div>
+      </div>
+
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="chart-title">What Helped Most</div>
+      <div class="bar-row">
+        <div class="bar-label">Good Debugging</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#16a34a"></div></div>
+        <div class="bar-value">641</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Multi-file Changes</div>
+        <div class="bar-track"><div class="bar-fill" style="width:9.0%;background:#16a34a"></div></div>
+        <div class="bar-value">58</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Fast/Accurate Search</div>
+        <div class="bar-track"><div class="bar-fill" style="width:2.7%;background:#16a34a"></div></div>
+        <div class="bar-value">17</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Outcomes</div>
+      <div class="bar-row">
+        <div class="bar-label">Partially Achieved</div>
+        <div class="bar-track"><div class="bar-fill" style="width:11.4%;background:#8b5cf6"></div></div>
+        <div class="bar-value">73</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Mostly Achieved</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.2%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Fully Achieved</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">642</div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Friction -->
+    <div class="section" id="friction">
+      <div class="section-title"><span class="icon">Friction Points</span></div>
+      <div class="section-desc">Your sessions show a pattern of Claude taking wrong approaches—especially with deployment tooling—and multi-part tasks stalling out before completion.</div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">Incorrect Tool/Platform Guidance</div>
+        <div class="friction-desc">Claude repeatedly gave you wrong instructions for platform-specific workflows like Vercel, burning cycles on incorrect UI navigation paths before falling back to the API. When you need deployment or platform configuration help, consider prompting Claude to use APIs or CLI tools directly rather than trying to walk you through dashboard UIs it can't see.</div>
+        <ul class="friction-examples">
+            <li>During your Next.js monorepo Vercel deployment, Claude gave you multiple incorrect Vercel dashboard navigation paths, requiring several correction cycles before finally resolving the Root Directory config via the Vercel API.</li>
+            <li>Claude misunderstood your request to apply a localhost approach to Vercel, interpreting it differently than you intended and prolonging what should have been a straightforward configuration task.</li>
+        </ul>
+      </div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">Incomplete Multi-Step Content Tasks</div>
+        <div class="friction-desc">Your PPT enhancement sessions consistently stalled in the research/discovery phase without producing final deliverables. You may get better results by breaking these into explicit phases—first a short research prompt, then a separate focused prompt for the actual content generation—so Claude doesn't exhaust the session on exploration alone.</div>
+        <ul class="friction-examples">
+            <li>You asked Claude to connect match-system image labeling analysis with brand strategy for your TIPS PPT, but the session ended after codebase exploration without any actual slide content being produced.</li>
+            <li>A second attempt to enhance the TIPS proposal's analysis section with AI image labeling and branding solutions also appears truncated mid-research, with extensive codebase reading but no completed output delivered to you.</li>
+        </ul>
+      </div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">Observer/Memory Sessions With No Actionable Output</div>
+        <div class="friction-desc">Several of your sessions involved memory-agent or observer configurations that captured only initial investigation steps, giving you little usable value for the time spent. Consider scoping these sessions with a concrete deliverable requirement so Claude prioritizes producing a tangible artifact rather than open-ended exploration.</div>
+        <ul class="friction-examples">
+            <li>Your Claude-Mem observer session watching a git workflow captured only codebase exploration with no actual changes or insights recorded before the checkpoint.</li>
+            <li>A session about consolidating npm local setup with Claude config only captured initial investigation steps without resolution, leaving you without a clear answer or next steps.</li>
+        </ul>
+      </div>
+
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="chart-title">Primary Friction Types</div>
+      <div class="bar-row">
+        <div class="bar-label">Wrong Approach</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#dc2626"></div></div>
+        <div class="bar-value">1,923</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Misunderstood Request</div>
+        <div class="bar-track"><div class="bar-fill" style="width:33.3%;background:#dc2626"></div></div>
+        <div class="bar-value">641</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">Inferred Satisfaction</div>
+      <div class="bar-row">
+        <div class="bar-label">Dissatisfied</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#eab308"></div></div>
+        <div class="bar-value">1,923</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Likely Satisfied</div>
+        <div class="bar-track"><div class="bar-fill" style="width:70.6%;background:#eab308"></div></div>
+        <div class="bar-value">1,357</div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section" id="features">
+      <div class="section-title"><span class="icon">Recommended Features</span></div>
+      <div class="section-desc">Claude Code features recommended based on your usage patterns.</div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">Custom Skills</div>
+        <div class="feature-desc">Reusable prompts that run with a single /command for repetitive workflows.</div>
+        <div class="feature-why"><strong>Why for you:</strong> You have 3+ sessions enhancing the same TIPS proposal PPT by linking match-system analysis. A /enhance-ppt skill could encode the exact steps (find prior analysis, connect to brand strategy, update slides) so each session starts productively instead of re-exploring.</div>
+      </div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">Task Agents</div>
+        <div class="feature-desc">Claude spawns focused sub-agents for complex exploration or parallel work.</div>
+        <div class="feature-why"><strong>Why for you:</strong> Your TaskCreate (6,021) and TaskUpdate (8,118) usage is already high, but multiple sessions stalled during codebase exploration. Explicitly asking for task agents to explore match-system while you work on the main task could parallelize discovery and prevent truncated sessions.</div>
+      </div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">Hooks</div>
+        <div class="feature-desc">Shell commands that auto-run at specific lifecycle events.</div>
+        <div class="feature-why"><strong>Why for you:</strong> With 86,847 Bash calls and heavy HTML/TypeScript work, auto-formatting and linting on save would catch issues early — especially for the branch-workflow.html type of UI edits where quick CSS/JS changes benefit from instant validation.</div>
+      </div>
+
+    </div>
+
+    <!-- Horizon -->
+    <div class="section" id="horizon">
+      <div class="section-title"><span class="icon">Future Horizon</span></div>
+      <div class="section-desc">Your data reveals a team pushing Claude Code hard across deployment, content strategy, and UI work—but friction patterns and truncated sessions signal clear opportunities to unlock autonomous, self-correcting workflows.</div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">Autonomous Deploy Pipelines That Self-Correct</div>
+        <div class="horizon-desc">Your biggest friction source—wrong Vercel dashboard paths and repeated correction cycles—disappears when Claude validates every step programmatically via APIs before presenting instructions. An autonomous deployment agent can attempt configuration, run verification checks, detect failures, and retry with alternative approaches without human babysitting.</div>
+        <div class="horizon-tip"><strong>Getting started:</strong> Use Claude Code with Bash tool access and API tokens stored in environment variables. Let Claude iterate against real deployment endpoints rather than guessing at UI paths.</div>
+      </div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">Parallel Agents for Research-Then-Execute Tasks</div>
+        <div class="horizon-desc">Multiple sessions show a recurring pattern: Claude spends an entire session exploring a codebase to understand match-system's image labeling, then the session truncates before any deliverable is produced. By splitting research and execution into parallel sub-tasks, one agent maps the codebase while another drafts content—then a coordinator merges results into a finished artifact in a single session.</div>
+        <div class="horizon-tip"><strong>Getting started:</strong> Leverage Claude Code's TaskCreate and TaskUpdate tools (already 14K+ uses in your data) to spawn sub-agents: one for codebase analysis, one for content drafting, with a parent task that blocks until both complete.</div>
+      </div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">Test-Driven UI Changes at Scale</div>
+        <div class="horizon-desc">Your speed-button replacement succeeded fast because it was a contained, verifiable change. Now imagine scaling that: Claude autonomously refactoring entire UI component libraries by writing browser tests first, making changes, running tests via headless Chrome, and iterating until every test passes—across dozens of files in your HTML-heavy codebase (17K+ HTML tool uses).</div>
+        <div class="horizon-tip"><strong>Getting started:</strong> Combine Claude Code's Edit/Write tools with the Chrome browser MCP tool (already 5K uses in your data) to create a tight loop: write test → make change → verify in browser → fix failures automatically.</div>
+      </div>
+
+    </div>
+
+    <!-- Fun Ending -->
+    <div class="fun-ending">
+      <div class="fun-headline">"Claude kept confidently giving wrong Vercel dashboard directions like a GPS leading you into a lake"</div>
+      <div class="fun-detail">During a Next.js monorepo deployment, Claude repeatedly told the user to navigate to Vercel settings paths that didn't exist, misunderstood their request about applying a localhost approach, and went through multiple correction cycles — before finally giving up on the UI entirely and just solving it through the Vercel API instead.</div>
+    </div>
+
+  </div>
+  </main>
+</div>
+
+
+<script>
+(function() {
+  'use strict';
+
+  // ── 1. Scroll Spy ──
+  var sections = document.querySelectorAll('.section[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
+  var sidebarLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var id = entry.target.id;
+        navLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+        sidebarLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(function(section) { observer.observe(section); });
+
+  // ── 2. Animated Counters ──
+  var heroVals = document.querySelectorAll('.hero-stat .val');
+  var counted = false;
+
+  function animateCounter(el, target, duration) {
+    var start = 0;
+    var startTime = null;
+    var locale = document.documentElement.lang === 'ko' ? 'ko-KR' : 'en-US';
+
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.floor(eased * target);
+      el.textContent = current.toLocaleString(locale);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var heroObserver = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !counted) {
+      counted = true;
+      heroVals.forEach(function(el) {
+        var text = el.textContent.replace(/,/g, '');
+        var target = parseInt(text) || 0;
+        if (target > 0) animateCounter(el, target, 1500);
+      });
+    }
+  }, { threshold: 0.5 });
+
+  var hero = document.querySelector('.hero');
+  if (hero) heroObserver.observe(hero);
+
+  // ── 3. Bar Chart Tooltips ──
+  document.querySelectorAll('.bar-row').forEach(function(row) {
+    var valueEl = row.querySelector('.bar-value');
+    var fillEl = row.querySelector('.bar-fill');
+    if (!valueEl || !fillEl) return;
+
+    var card = row.closest('.card');
+    if (!card) return;
+
+    var allRows = card.querySelectorAll('.bar-row');
+    var total = 0;
+    allRows.forEach(function(r) {
+      var v = r.querySelector('.bar-value');
+      if (v) total += parseInt(v.textContent.replace(/,/g, '')) || 0;
+    });
+
+    var value = parseInt(valueEl.textContent.replace(/,/g, '')) || 0;
+    var pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'bar-tooltip';
+    tooltip.textContent = pct + '%';
+    row.appendChild(tooltip);
+  });
+
+  // ── 4. Donut Chart Interaction ──
+  document.querySelectorAll('.donut-wrap').forEach(function(wrap) {
+    var allCircles = wrap.querySelectorAll('svg circle');
+    var legends = wrap.querySelectorAll('.legend-item');
+
+    var dataCircles = [];
+    allCircles.forEach(function(c) {
+      if (c.getAttribute('stroke') !== 'rgba(255,255,255,0.05)') {
+        dataCircles.push(c);
+      }
+    });
+
+    function highlightSegment(index) {
+      wrap.classList.add('hover-active');
+      dataCircles.forEach(function(c, i) {
+        c.classList.toggle('highlight', i === index);
+      });
+      legends.forEach(function(l, i) {
+        l.classList.toggle('highlight', i === index);
+      });
+    }
+
+    function clearHighlight() {
+      wrap.classList.remove('hover-active');
+      dataCircles.forEach(function(c) { c.classList.remove('highlight'); });
+      legends.forEach(function(l) { l.classList.remove('highlight'); });
+    }
+
+    dataCircles.forEach(function(circle, i) {
+      circle.addEventListener('mouseenter', function() { highlightSegment(i); });
+      circle.addEventListener('mouseleave', clearHighlight);
+    });
+
+    legends.forEach(function(legend, i) {
+      legend.addEventListener('mouseenter', function() { highlightSegment(i); });
+      legend.addEventListener('mouseleave', clearHighlight);
+    });
+  });
+
+  // ── 5. Bar Chart Sort Toggle ──
+  document.querySelectorAll('.chart-title').forEach(function(title) {
+    var card = title.closest('.card');
+    if (!card) return;
+    var rows = card.querySelectorAll('.bar-row');
+    if (rows.length < 2) return;
+
+    var btn = document.createElement('button');
+    btn.className = 'sort-btn';
+    btn.setAttribute('data-order', 'desc');
+
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'sort-icon';
+    iconSpan.textContent = '\u25B2';
+    btn.appendChild(iconSpan);
+    btn.appendChild(document.createTextNode(' Sort'));
+    title.appendChild(btn);
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var order = btn.getAttribute('data-order');
+      var container = rows[0].parentNode;
+      var arr = Array.from(container.querySelectorAll('.bar-row'));
+
+      arr.sort(function(a, b) {
+        var va = parseInt(a.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        var vb = parseInt(b.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        return order === 'desc' ? va - vb : vb - va;
+      });
+
+      arr.forEach(function(row) { container.appendChild(row); });
+      var newOrder = order === 'desc' ? 'asc' : 'desc';
+      btn.setAttribute('data-order', newOrder);
+      btn.classList.toggle('desc', newOrder === 'desc');
+    });
+  });
+
+  // ── 6. Card Collapse/Expand ──
+  var cardTypes = [
+    { selector: '.win-card', titleSel: '.win-title' },
+    { selector: '.friction-card', titleSel: '.friction-title' },
+    { selector: '.feature-card', titleSel: '.feature-title' },
+    { selector: '.horizon-card', titleSel: '.horizon-title' }
+  ];
+
+  cardTypes.forEach(function(type) {
+    document.querySelectorAll(type.selector).forEach(function(card) {
+      var title = card.querySelector(type.titleSel);
+      if (!title) return;
+
+      var header = document.createElement('div');
+      header.className = 'collapsible-header';
+
+      var chevron = document.createElement('span');
+      chevron.className = 'collapse-chevron';
+      chevron.textContent = '\u25BC';
+
+      title.parentNode.insertBefore(header, title);
+      header.appendChild(title);
+      header.appendChild(chevron);
+
+      var body = document.createElement('div');
+      body.className = 'collapsible-body';
+
+      while (header.nextSibling) {
+        body.appendChild(header.nextSibling);
+      }
+      card.appendChild(body);
+
+      header.addEventListener('click', function() {
+        card.classList.toggle('collapsed');
+      });
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

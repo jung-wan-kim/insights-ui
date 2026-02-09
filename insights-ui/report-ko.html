@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Claude Code 인사이트 리포트</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1c2129;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-dim: #8b949e;
+      --text-bright: #f0f6fc;
+      --accent: #2f81f7;
+      --accent2: #388bfd;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --cyan: #39d2c0;
+      --pink: #db61a2;
+      --orange: #f0883e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-padding-top: 60px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+      padding: 32px 24px 24px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+    .hero h1 { font-size: 28px; font-weight: 700; color: var(--text-bright); margin-bottom: 4px; letter-spacing: -0.5px; }
+    .hero .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 10px;
+    }
+    .hero-stat .val { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+    .hero-stat .lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* Dashboard Layout */
+    .dashboard-wrap {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 140px);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .sidebar {
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      scrollbar-width: thin;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .main-content { padding: 16px 24px; overflow-y: auto; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    @media (max-width: 1024px) {
+      .dashboard-wrap { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* Navigation */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 0;
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav-link {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Sidebar */
+    .sidebar-section { margin-bottom: 16px; }
+    .sidebar-title {
+      font-size: 11px; font-weight: 700; color: var(--text-bright);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-stat {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .sidebar-stat-label { font-size: 11px; color: var(--text-dim); }
+    .sidebar-stat-value { font-size: 12px; font-weight: 600; color: var(--text); }
+    .sidebar-link {
+      display: block; padding: 6px 8px; font-size: 11px; color: var(--text-dim);
+      text-decoration: none; border-radius: 4px; margin-bottom: 2px; transition: all 0.2s;
+    }
+    .sidebar-link:hover { background: rgba(99,102,241,0.15); color: var(--accent); }
+    .sidebar-highlight {
+      background: rgba(99,102,241,0.1); border-radius: 6px; padding: 10px; margin-bottom: 12px;
+    }
+    .sidebar-highlight-title { font-size: 10px; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+    .sidebar-highlight-text { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+    /* Section */
+    .section { padding: 12px 0; }
+    .section-title {
+      font-size: 18px; font-weight: 700; color: var(--text-bright);
+      margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .icon { font-size: 20px; }
+    .section-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; margin-bottom: 8px; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Glance */
+    .glance {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 16px; margin: 8px auto 12px; max-width: 1200px;
+    }
+    .glance-title { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 8px; }
+    .glance-item { margin-bottom: 6px; font-size: 12px; line-height: 1.5; color: var(--text); }
+    .glance-item strong { color: var(--accent); }
+
+    /* Charts */
+    .chart-title {
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+    .bar-row { display: flex; align-items: center; margin-bottom: 8px; }
+    .bar-label {
+      width: 100px; font-size: 12px; color: var(--text-dim); flex-shrink: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .bar-track {
+      flex: 1; height: 8px; background: rgba(255,255,255,0.05);
+      border-radius: 4px; margin: 0 10px; overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+    .bar-value { width: 55px; font-size: 12px; font-weight: 600; color: var(--text); text-align: right; }
+
+    /* Donut */
+    .donut-wrap { display: flex; align-items: center; gap: 24px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Win cards */
+    .win-card {
+      background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.05) 100%);
+      border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .win-title { font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 4px; }
+    .win-desc { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+    /* Friction cards */
+    .friction-card {
+      background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(236,72,153,0.05) 100%);
+      border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .friction-title { font-size: 13px; font-weight: 600; color: #fca5a5; margin-bottom: 4px; }
+    .friction-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .friction-examples { margin: 0 0 0 12px; }
+    .friction-examples li { font-size: 11px; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+
+    /* Horizon cards */
+    .horizon-card {
+      background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(236,72,153,0.06) 100%);
+      border: 1px solid rgba(139,92,246,0.25); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .horizon-title { font-size: 13px; font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+    .horizon-desc { font-size: 11px; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+    .horizon-tip {
+      background: rgba(139,92,246,0.12); border-radius: 6px; padding: 8px 10px;
+      font-size: 11px; color: #c4b5fd; line-height: 1.4;
+    }
+
+    /* Feature cards */
+    .feature-card {
+      background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(99,102,241,0.06) 100%);
+      border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    }
+    .feature-title { font-size: 13px; font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+    .feature-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .feature-why { font-size: 11px; color: var(--text); line-height: 1.4; }
+
+    /* Fun ending */
+    .fun-ending {
+      text-align: center; padding: 20px; margin-top: 16px;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(239,68,68,0.06) 100%);
+      border-radius: 16px; border: 1px solid rgba(245,158,11,0.2);
+    }
+    .fun-headline { font-size: 16px; font-weight: 700; color: #fcd34d; margin-bottom: 12px; }
+    .fun-detail { font-size: 12px; color: var(--text-dim); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .donut-wrap { flex-direction: column; }
+    }
+
+    /* ── Interactive Styles ── */
+
+    /* Scroll spy active states */
+    .nav-link.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .sidebar-link.active { background: rgba(99,102,241,0.2); color: var(--accent); font-weight: 600; }
+
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
+
+    /* Bar chart hover */
+    .bar-row { position: relative; cursor: default; transition: transform 0.15s; }
+    .bar-row:hover { transform: translateX(4px); }
+    .bar-row:hover .bar-fill { filter: brightness(1.3); }
+    .bar-tooltip {
+      position: absolute; right: 60px; top: -28px; background: var(--text-bright); color: var(--bg);
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10;
+    }
+    .bar-tooltip::after {
+      content: ''; position: absolute; top: 100%; right: 20px;
+      border: 4px solid transparent; border-top-color: var(--text-bright);
+    }
+    .bar-row:hover .bar-tooltip { opacity: 1; }
+
+    /* Donut chart hover */
+    .donut-wrap svg circle { transition: stroke-width 0.2s, opacity 0.2s; cursor: pointer; }
+    .donut-wrap.hover-active svg circle:not(.donut-bg) { opacity: 0.3; }
+    .donut-wrap.hover-active svg circle.highlight { opacity: 1; stroke-width: 20; }
+    .legend-item { cursor: pointer; transition: opacity 0.2s; padding: 2px 4px; border-radius: 4px; }
+    .legend-item:hover { background: rgba(255,255,255,0.05); }
+    .donut-wrap.hover-active .legend-item { opacity: 0.4; }
+    .donut-wrap.hover-active .legend-item.highlight { opacity: 1; font-weight: 600; }
+
+    /* Card collapse/expand */
+    .collapsible-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .collapse-chevron {
+      font-size: 12px; color: var(--text-dim); transition: transform 0.3s;
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .collapse-chevron:hover { background: rgba(255,255,255,0.1); }
+    .collapsible-body {
+      max-height: 2000px; overflow: hidden; transition: max-height 0.4s ease-out, opacity 0.3s;
+      opacity: 1;
+    }
+    .collapsed .collapsible-body { max-height: 0; opacity: 0; }
+    .collapsed .collapse-chevron { transform: rotate(-90deg); }
+
+    /* Sort toggle */
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim);
+      cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
+      background: transparent; transition: all 0.2s; margin-left: 8px;
+    }
+    .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sort-btn .sort-icon { transition: transform 0.2s; }
+    .sort-btn.desc .sort-icon { transform: rotate(180deg); }
+
+
+    /* Hero counter animation */
+    .hero-stat .val { transition: color 0.3s; }
+
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>Claude Code 인사이트</h1>
+    <p class="subtitle">2026-01-02 ~ 2026-02-05 | 35일간의 개발 여정</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="val">4,750</div>
+        <div class="lbl">세션</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">33,485</div>
+        <div class="lbl">메시지</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">10,983</div>
+        <div class="lbl">파일</div>
+      </div>
+      <div class="hero-stat">
+        <div class="val">35</div>
+        <div class="lbl">일</div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:11px; color:var(--text-dim);">
+      <span>일평균 <strong style="color:var(--text);">190.0</strong> 세션</span>
+      <span>|</span>
+      <span>일평균 <strong style="color:var(--text);">1339.4</strong> 메시지</span>
+      <span>|</span>
+      <span style="color:var(--green);">+1,594,401</span> / <span style="color:var(--red);">-210,844</span> lines
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <a href="#overview" class="nav-link">현황</a>
+    <a href="#tools" class="nav-link">도구</a>
+    <a href="#languages" class="nav-link">언어</a>
+    <a href="#activity" class="nav-link">활동</a>
+    <a href="#wins" class="nav-link">성과</a>
+    <a href="#friction" class="nav-link">개선</a>
+    <a href="#features" class="nav-link">추천</a>
+    <a href="#horizon" class="nav-link">전망</a>
+  </div>
+</nav>
+
+<!-- Dashboard Layout -->
+<div class="dashboard-wrap">
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">핵심 지표</div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">세션</span><span class="sidebar-stat-value">4,750</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">메시지</span><span class="sidebar-stat-value">33,485</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">파일</span><span class="sidebar-stat-value">10,983</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">도구 호출</span><span class="sidebar-stat-value">0</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">코드 변경</span><span class="sidebar-stat-value" style="color:var(--green)">+1,594,401 / <span style="color:var(--red)">-210,844</span></span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">요약</div>
+      <div class="sidebar-highlight">
+        <div class="sidebar-highlight-title">잘 되고 있는 것</div>
+        <div class="sidebar-highlight-text">복잡한 작업에 대한 리서치 우선 접근 방식이 뛰어납니다 — 예를 들어 AI 이미지 분석을 투자 제안 콘텐츠에 연결하기 전에 match-system 코드베이스를 체계적으로 탐색하게 한 것처럼요. 장벽에 부딪혔을 때(Vercel 배포 난관 등) 포기하지 않고 대안적 접근법으로 전환하는 좋은 감각을 보여주며, 속도 버튼 교체 같은 범위가 명확한 UI 작업은 원활하게 진행됩니다.</div>
+      </div>
+      <div class="sidebar-highlight" style="background:rgba(248,81,73,0.1);">
+        <div class="sidebar-highlight-title" style="color:var(--red);">개선 필요</div>
+        <div class="sidebar-highlight-text">Claude 측면에서는, 실제로 볼 수 없는 플랫폼별 UI 탐색에 크게 어려움을 겪습니다 — Vercel 배포 시 API 우회법을 찾기 전까지 잘못된 대시보드 안내에 상당한 시간을 소모했습니다. 사용자 측면에서는, 콘텐츠 중심의 PPT 세션이 열린 리서치 모드에서 정체되어 최종 결과물을 만들지 못하는 경향이 있고, 옵저버/메모리 세션은 탐색만 하고 구체적인 산출물 없이 끝나는 경우가 많습니다.</div>
+      </div>
+      <div class="sidebar-highlight" style="background:rgba(52,211,153,0.1);">
+        <div class="sidebar-highlight-title" style="color:var(--green);">빠른 개선</div>
+        <div class="sidebar-highlight-text">반복적인 PPT 개선 워크플로를 위한 커스텀 스킬(/command)을 만들어 보세요 — 리서치 먼저, 그 다음 콘텐츠 생성이라는 2단계 구조를 강제하면 Claude가 전체 세션을 탐색에만 소비하는 것을 방지할 수 있습니다. 또한 크로스 시스템 분석 작업에 태스크 에이전트를 활용해 한 서브 에이전트가 코드베이스를 파악하는 동안 다른 서브 에이전트가 실제 결과물을 작성하도록 해보세요.</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">도구 TOP 5</div>
+
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">언어 분포</div>
+
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">바로가기</div>
+      <a href="#overview" class="sidebar-link">📊 전체 현황</a>
+      <a href="#tools" class="sidebar-link">🔧 도구 사용량</a>
+      <a href="#activity" class="sidebar-link">⏰ 활동 패턴</a>
+      <a href="#wins" class="sidebar-link">🏆 인상적인 성과</a>
+      <a href="#friction" class="sidebar-link">⚡ 개선 포인트</a>
+      <a href="#features" class="sidebar-link">💡 추천 기능</a>
+      <a href="#horizon" class="sidebar-link">🚀 미래 전망</a>
+    </div>
+  </aside>
+
+  <!-- Right Main Content -->
+  <main class="main-content">
+  <div class="container">
+
+    <!-- Overview -->
+    <div class="section" id="overview">
+      <div class="section-title"><span class="icon">📊</span> 전체 현황</div>
+      <div class="section-desc">35일간의 Claude Code 사용 데이터를 기반으로 한 종합 분석입니다.</div>
+
+      <div style="background: rgba(99,102,241,0.1); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: var(--accent); margin-bottom: 8px;">
+        <strong>핵심 패턴:</strong> 핵심 패턴: Claude Code를 인프라 및 배포 작업을 위한 대규모 병렬 자동화 엔진으로 운영하면서, 창의적이거나 모호한 목표에서만 수동으로 개입합니다. 이는 높은 처리량을 이끌지만, 최소한의 사전 안내로 인해 잘못된 접근 방식의 마찰이 자주 발생합니다.
+      </div>
+
+      <!-- At a Glance -->
+      <div class="glance">
+        <div class="glance-title">한눈에 보기</div>
+        <div class="glance-item"><strong>잘 되는 것:</strong> 복잡한 작업에 대한 리서치 우선 접근 방식이 뛰어납니다 — 예를 들어 AI 이미지 분석을 투자 제안 콘텐츠에 연결하기 전에 match-system 코드베이스를 체계적으로 탐색하게 한 것처럼요. 장벽에 부딪혔을 때(Vercel 배포 난관 등) 포기하지 않고 대안적 접근법으로 전환하는 좋은 감각을 보여주며, 속도 버튼 교체 같은 범위가 명확한 UI 작업은 원활하게 진행됩니다.</div>
+        <div class="glance-item"><strong>개선 필요:</strong> Claude 측면에서는, 실제로 볼 수 없는 플랫폼별 UI 탐색에 크게 어려움을 겪습니다 — Vercel 배포 시 API 우회법을 찾기 전까지 잘못된 대시보드 안내에 상당한 시간을 소모했습니다. 사용자 측면에서는, 콘텐츠 중심의 PPT 세션이 열린 리서치 모드에서 정체되어 최종 결과물을 만들지 못하는 경향이 있고, 옵저버/메모리 세션은 탐색만 하고 구체적인 산출물 없이 끝나는 경우가 많습니다.</div>
+        <div class="glance-item"><strong>빠른 개선:</strong> 반복적인 PPT 개선 워크플로를 위한 커스텀 스킬(/command)을 만들어 보세요 — 리서치 먼저, 그 다음 콘텐츠 생성이라는 2단계 구조를 강제하면 Claude가 전체 세션을 탐색에만 소비하는 것을 방지할 수 있습니다. 또한 크로스 시스템 분석 작업에 태스크 에이전트를 활용해 한 서브 에이전트가 코드베이스를 파악하는 동안 다른 서브 에이전트가 실제 결과물을 작성하도록 해보세요.</div>
+        <div class="glance-item"><strong>미래 워크플로우:</strong> 모델이 더 발전하면 Vercel 스타일의 배포 마찰은 사라질 것입니다 — Claude가 API를 통해 자율적으로 설정을 시도하고, 검증을 수행하며, 여러 번의 수정 없이도 스스로 교정하는 것을 상상해 보세요. 리서치 후 실행하는 PPT 작업도 병렬 에이전트 오케스트레이션에 적합합니다 — 코드베이스 분석과 콘텐츠 생성을 동시에 처리하는 서브 에이전트들이 결과를 하나의 완성된 산출물로 병합할 수 있습니다.</div>
+      </div>
+
+      <!-- Project Areas -->
+      <div class="card">
+        <div class="chart-title">주요 작업 영역</div>
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">Vercel 배포 및 설정</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">약 1개 세션</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">개발 브랜치에서 Vercel로 Next.js 모노레포 배포, Root Directory 설정 포함.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">TIPS 투자 제안 개선</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">약 3개 세션</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">TIPS 투자 제안의 PPT 콘텐츠 개선, match-system AI 이미지 분석을 브랜드 전략에 연결.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">인터랙티브 웹 UI 개발</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">약 1개 세션</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">HTML 기반 브랜치 워크플로 시각화 수정, 속도 슬라이더를 x2 속도 버튼으로 교체.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">로컬 개발 환경 및 도구</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">약 2개 세션</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">Claude Code 설치 방법 조사 및 npm 로컬 설정과 Claude 설정 통합.</div>
+        </div>
+
+
+        <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:13px; font-weight:600; color:var(--text-bright);">자동화된 워크플로 관찰 및 메모리</span>
+            <span style="font-size:11px; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">약 1개 세션</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">git 워크플로 세션에서 컨텍스트를 관찰하도록 Claude-Mem 옵저버 에이전트 설정.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="section" id="tools">
+      <div class="section-title"><span class="icon">🔧</span> 도구 사용량</div>
+      <div class="section-desc">가장 많이 사용한 도구와 도넛 차트입니다.</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">도구 사용 순위</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">도구 분포</div>
+
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">요구 유형</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">도구 오류</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Languages -->
+    <div class="section" id="languages">
+      <div class="section-title"><span class="icon">💻</span> 언어 분포</div>
+      <div class="section-desc">작업에 사용된 프로그래밍 언어 분석입니다.</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">언어 사용 순위</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">언어 분포</div>
+
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">세션 유형</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">병렬 세션 (Multi-Clauding)</div>
+          <div style="display: flex; gap: 16px; margin: 12px 0;">
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">1,124</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">중복 이벤트</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">546</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">관련 세션</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">27%</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">메시지 비율</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="section" id="activity">
+      <div class="section-title"><span class="icon">⏰</span> 활동 패턴</div>
+      <div class="section-desc">시간대별 활동과 응답 시간 분석입니다. (KST 기준)</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">시간대별 메시지 (KST)</div>
+      <div class="bar-row">
+        <div class="bar-label">오전 (6-12)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">18,393</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">오후 (12-18)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20.1%;background:#8b5cf6"></div></div>
+        <div class="bar-value">3,701</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">저녁 (18-24)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.0%;background:#8b5cf6"></div></div>
+        <div class="bar-value">0</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">심야 (0-6)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:61.9%;background:#8b5cf6"></div></div>
+        <div class="bar-value">11,391</div>
+      </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">응답 시간 분포</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+            중앙값: 57초 &bull; 평균: 190.3초
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wins -->
+    <div class="section" id="wins">
+      <div class="section-title"><span class="icon">🏆</span> 인상적인 성과</div>
+      <div class="section-desc">4,750개의 세션에서 대규모 Claude Code 운영을 수행하고 있으며, 폴리글랏 코드베이스 전반에 걸쳐 배포, 로컬 개발 환경 설정, 워크플로 자동화에 집중하고 있습니다.</div>
+
+
+      <div class="win-card">
+        <div class="win-title">끈질긴 배포 문제 해결</div>
+        <div class="win-desc">Next.js 모노레포를 Vercel에 배포할 때 잘못된 대시보드 안내로 반복적인 막다른 골목에 부딪혔지만, 포기하지 않고 결국 Vercel API를 활용하여 Root Directory를 올바르게 설정하는 데 성공했습니다. 마찰을 극복하고 대안적 접근법을 찾으려는 의지가 좌절스러운 세션을 완전한 성과로 전환시켰습니다.</div>
+      </div>
+
+
+      <div class="win-card">
+        <div class="win-title">크로스 시스템 전략 분석</div>
+        <div class="win-desc">match-system의 AI 이미지 분석 레이블링을 브랜드 전략 및 투자 제안에 연결하는 정교한 작업을 수행하고 있습니다. 여러 세션에 걸쳐 인사이트를 프레젠테이션 콘텐츠에 통합하기 전에 체계적으로 Claude에게 코드베이스를 탐색하게 하여 시스템을 깊이 이해하도록 했습니다 — 복잡한 결과물에 대한 사려 깊은 리서치 우선 접근 방식을 보여줍니다.</div>
+      </div>
+
+
+      <div class="win-card">
+        <div class="win-title">브라우저 통합 폴리글랏 개발</div>
+        <div class="win-desc">HTML, TypeScript, Java, YAML 등을 아우르는 인상적인 워크플로를 구축했으며, Chrome MCP 플러그인을 통한 5,000회 이상의 브라우저 자동화 호출과 함께 Bash 및 태스크 관리를 적극 활용하고 있습니다. 속도 버튼 교체 같은 UI 변경을 배포 설정 및 콘텐츠 작업과 함께 조율하는 능력은 Claude Code를 진정한 풀스택 개발 파트너로 활용하고 있음을 보여줍니다.</div>
+      </div>
+
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="chart-title">도움이 된 것</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">성과 달성도</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Friction -->
+    <div class="section" id="friction">
+      <div class="section-title"><span class="icon">⚡</span> 개선 포인트</div>
+      <div class="section-desc">세션에서 Claude가 잘못된 접근 방식을 취하는 패턴이 보입니다 — 특히 배포 도구에서 — 그리고 다단계 작업이 완료 전에 정체됩니다.</div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">잘못된 도구/플랫폼 안내</div>
+        <div class="friction-desc">Claude가 Vercel 같은 플랫폼별 워크플로에 대해 반복적으로 잘못된 안내를 제공하여, API로 전환하기 전까지 잘못된 UI 탐색 경로에 시간을 낭비했습니다. 배포나 플랫폼 설정 도움이 필요할 때는 대시보드 UI를 안내하기보다 API나 CLI 도구를 직접 사용하도록 Claude에게 요청하는 것이 좋습니다.</div>
+        <ul class="friction-examples">
+            <li>Next.js 모노레포 Vercel 배포 시 Claude가 여러 차례 잘못된 Vercel 대시보드 탐색 경로를 제시하여, 결국 Vercel API를 통해 Root Directory 설정을 해결하기까지 여러 번의 수정 과정이 필요했습니다.</li>
+            <li>Claude가 localhost 접근법을 Vercel에 적용하라는 요청을 다르게 해석하여, 간단했어야 할 설정 작업을 불필요하게 길어지게 했습니다.</li>
+        </ul>
+      </div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">미완성 다단계 콘텐츠 작업</div>
+        <div class="friction-desc">PPT 개선 세션이 리서치/탐색 단계에서 일관되게 정체되어 최종 결과물을 만들지 못했습니다. 짧은 리서치 프롬프트를 먼저 주고, 그 다음 실제 콘텐츠 생성을 위한 별도의 집중 프롬프트를 주는 방식으로 명시적인 단계를 나누면 더 나은 결과를 얻을 수 있습니다.</div>
+        <ul class="friction-examples">
+            <li>match-system 이미지 레이블링 분석을 TIPS PPT의 브랜드 전략에 연결해달라고 요청했지만, 세션이 코드베이스 탐색 후 실제 슬라이드 콘텐츠 없이 종료되었습니다.</li>
+            <li>AI 이미지 레이블링과 브랜딩 솔루션으로 TIPS 제안의 분석 섹션을 개선하려는 두 번째 시도도 리서치 도중 잘려, 광범위한 코드베이스 읽기는 했지만 완성된 결과물이 전달되지 않았습니다.</li>
+        </ul>
+      </div>
+
+
+      <div class="friction-card">
+        <div class="friction-title">실행 가능한 결과물 없는 옵저버/메모리 세션</div>
+        <div class="friction-desc">여러 세션이 초기 조사 단계만 캡처한 메모리 에이전트 또는 옵저버 설정을 포함하여, 소비한 시간 대비 거의 활용 가치가 없었습니다. 구체적인 결과물 요구 사항을 포함하여 세션 범위를 설정하면 Claude가 열린 탐색보다 실질적인 산출물 생산에 우선순위를 두도록 할 수 있습니다.</div>
+        <ul class="friction-examples">
+            <li>git 워크플로를 관찰하는 Claude-Mem 옵저버 세션은 체크포인트 전에 실제 변경 사항이나 인사이트 기록 없이 코드베이스 탐색만 캡처했습니다.</li>
+            <li>npm 로컬 설정과 Claude 설정 통합에 관한 세션은 해결 없이 초기 조사 단계만 캡처하여, 명확한 답이나 다음 단계가 남지 않았습니다.</li>
+        </ul>
+      </div>
+
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <div class="card">
+          <div class="chart-title">주요 마찰 유형</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+        <div class="card">
+          <div class="chart-title">추정 만족도</div>
+<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section" id="features">
+      <div class="section-title"><span class="icon">💡</span> 추천 기능</div>
+      <div class="section-desc">현재 사용 패턴을 기반으로 추천하는 Claude Code 기능입니다.</div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">커스텀 스킬</div>
+        <div class="feature-desc">반복적인 워크플로를 위해 단일 /command로 실행할 수 있는 재사용 가능한 프롬프트입니다.</div>
+        <div class="feature-why"><strong>당신에게 필요한 이유:</strong> 동일한 TIPS 제안 PPT를 match-system 분석과 연결하여 개선하는 세션이 3회 이상입니다. /enhance-ppt 스킬이 정확한 단계를 인코딩하면 매 세션이 재탐색 없이 생산적으로 시작될 수 있습니다.</div>
+      </div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">태스크 에이전트</div>
+        <div class="feature-desc">Claude가 복잡한 탐색이나 병렬 작업을 위해 집중된 서브 에이전트를 생성합니다.</div>
+        <div class="feature-why"><strong>당신에게 필요한 이유:</strong> TaskCreate(6,021회)와 TaskUpdate(8,118회) 사용량이 이미 높지만, 여러 세션이 코드베이스 탐색 중 정체되었습니다. 태스크 에이전트에게 match-system을 탐색하게 하면서 본인은 메인 작업에 집중하면 탐색을 병렬화하고 잘린 세션을 방지할 수 있습니다.</div>
+      </div>
+
+
+      <div class="feature-card">
+        <div class="feature-title">훅</div>
+        <div class="feature-desc">특정 라이프사이클 이벤트에 자동으로 실행되는 셸 명령입니다.</div>
+        <div class="feature-why"><strong>당신에게 필요한 이유:</strong> 86,847회의 Bash 호출과 대량의 HTML/TypeScript 작업에서, 저장 시 자동 포매팅 및 린팅은 문제를 조기에 잡아낼 수 있습니다.</div>
+      </div>
+
+    </div>
+
+    <!-- Horizon -->
+    <div class="section" id="horizon">
+      <div class="section-title"><span class="icon">🚀</span> 미래 전망</div>
+      <div class="section-desc">데이터는 배포, 콘텐츠 전략, UI 작업에서 Claude Code를 강하게 활용하는 팀을 보여주지만, 마찰 패턴과 잘린 세션은 자율적이고 자기 교정하는 워크플로로 전환할 명확한 기회를 보여줍니다.</div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">자율적으로 자기 교정하는 배포 파이프라인</div>
+        <div class="horizon-desc">가장 큰 마찰 원인인 잘못된 Vercel 대시보드 경로와 반복적인 수정 과정은, Claude가 안내를 제시하기 전에 API를 통해 프로그래밍 방식으로 모든 단계를 검증하면 사라집니다.</div>
+        <div class="horizon-tip"><strong>시작 방법:</strong> Bash 도구 액세스와 환경 변수에 저장된 API 토큰으로 Claude Code를 사용하세요.</div>
+      </div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">리서치-실행 작업을 위한 병렬 에이전트</div>
+        <div class="horizon-desc">여러 세션에서 반복되는 패턴: Claude가 전체 세션을 코드베이스 탐색에 소비한 후, 결과물 생산 전에 세션이 잘립니다. 리서치와 실행을 병렬 하위 작업으로 분리하면 효율이 크게 향상됩니다.</div>
+        <div class="horizon-tip"><strong>시작 방법:</strong> Claude Code의 TaskCreate와 TaskUpdate 도구를 활용하여 서브 에이전트를 생성하세요.</div>
+      </div>
+
+
+      <div class="horizon-card">
+        <div class="horizon-title">대규모 테스트 주도 UI 변경</div>
+        <div class="horizon-desc">속도 버튼 교체가 빨리 성공한 이유는 범위가 명확하고 검증 가능한 변경이었기 때문입니다. 이를 확장하면 수십 개 파일을 대상으로 자율적인 UI 리팩토링이 가능합니다.</div>
+        <div class="horizon-tip"><strong>시작 방법:</strong> Claude Code의 Edit/Write 도구와 Chrome 브라우저 MCP 도구를 결합하세요.</div>
+      </div>
+
+    </div>
+
+    <!-- Fun Ending -->
+    <div class="fun-ending">
+      <div class="fun-headline">"Claude가 호수로 안내하는 GPS처럼 자신있게 잘못된 Vercel 대시보드 경로를 계속 알려줬습니다"</div>
+      <div class="fun-detail">Next.js 모노레포 배포 중, Claude는 사용자에게 존재하지 않는 Vercel 설정 경로를 반복적으로 안내하고, localhost 접근법 적용 요청을 오해했으며, 여러 차례의 수정 과정을 거쳤습니다 — 결국 UI를 완전히 포기하고 Vercel API를 통해 해결했습니다.</div>
+    </div>
+
+  </div>
+  </main>
+</div>
+
+
+<script>
+(function() {
+  'use strict';
+
+  // ── 1. Scroll Spy ──
+  var sections = document.querySelectorAll('.section[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
+  var sidebarLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var id = entry.target.id;
+        navLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+        sidebarLinks.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(function(section) { observer.observe(section); });
+
+  // ── 2. Animated Counters ──
+  var heroVals = document.querySelectorAll('.hero-stat .val');
+  var counted = false;
+
+  function animateCounter(el, target, duration) {
+    var start = 0;
+    var startTime = null;
+    var locale = document.documentElement.lang === 'ko' ? 'ko-KR' : 'en-US';
+
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.floor(eased * target);
+      el.textContent = current.toLocaleString(locale);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var heroObserver = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !counted) {
+      counted = true;
+      heroVals.forEach(function(el) {
+        var text = el.textContent.replace(/,/g, '');
+        var target = parseInt(text) || 0;
+        if (target > 0) animateCounter(el, target, 1500);
+      });
+    }
+  }, { threshold: 0.5 });
+
+  var hero = document.querySelector('.hero');
+  if (hero) heroObserver.observe(hero);
+
+  // ── 3. Bar Chart Tooltips ──
+  document.querySelectorAll('.bar-row').forEach(function(row) {
+    var valueEl = row.querySelector('.bar-value');
+    var fillEl = row.querySelector('.bar-fill');
+    if (!valueEl || !fillEl) return;
+
+    var card = row.closest('.card');
+    if (!card) return;
+
+    var allRows = card.querySelectorAll('.bar-row');
+    var total = 0;
+    allRows.forEach(function(r) {
+      var v = r.querySelector('.bar-value');
+      if (v) total += parseInt(v.textContent.replace(/,/g, '')) || 0;
+    });
+
+    var value = parseInt(valueEl.textContent.replace(/,/g, '')) || 0;
+    var pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'bar-tooltip';
+    tooltip.textContent = pct + '%';
+    row.appendChild(tooltip);
+  });
+
+  // ── 4. Donut Chart Interaction ──
+  document.querySelectorAll('.donut-wrap').forEach(function(wrap) {
+    var allCircles = wrap.querySelectorAll('svg circle');
+    var legends = wrap.querySelectorAll('.legend-item');
+
+    var dataCircles = [];
+    allCircles.forEach(function(c) {
+      if (c.getAttribute('stroke') !== 'rgba(255,255,255,0.05)') {
+        dataCircles.push(c);
+      }
+    });
+
+    function highlightSegment(index) {
+      wrap.classList.add('hover-active');
+      dataCircles.forEach(function(c, i) {
+        c.classList.toggle('highlight', i === index);
+      });
+      legends.forEach(function(l, i) {
+        l.classList.toggle('highlight', i === index);
+      });
+    }
+
+    function clearHighlight() {
+      wrap.classList.remove('hover-active');
+      dataCircles.forEach(function(c) { c.classList.remove('highlight'); });
+      legends.forEach(function(l) { l.classList.remove('highlight'); });
+    }
+
+    dataCircles.forEach(function(circle, i) {
+      circle.addEventListener('mouseenter', function() { highlightSegment(i); });
+      circle.addEventListener('mouseleave', clearHighlight);
+    });
+
+    legends.forEach(function(legend, i) {
+      legend.addEventListener('mouseenter', function() { highlightSegment(i); });
+      legend.addEventListener('mouseleave', clearHighlight);
+    });
+  });
+
+  // ── 5. Bar Chart Sort Toggle ──
+  document.querySelectorAll('.chart-title').forEach(function(title) {
+    var card = title.closest('.card');
+    if (!card) return;
+    var rows = card.querySelectorAll('.bar-row');
+    if (rows.length < 2) return;
+
+    var btn = document.createElement('button');
+    btn.className = 'sort-btn';
+    btn.setAttribute('data-order', 'desc');
+
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'sort-icon';
+    iconSpan.textContent = '\u25B2';
+    btn.appendChild(iconSpan);
+    btn.appendChild(document.createTextNode(' Sort'));
+    title.appendChild(btn);
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var order = btn.getAttribute('data-order');
+      var container = rows[0].parentNode;
+      var arr = Array.from(container.querySelectorAll('.bar-row'));
+
+      arr.sort(function(a, b) {
+        var va = parseInt(a.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        var vb = parseInt(b.querySelector('.bar-value').textContent.replace(/,/g, '')) || 0;
+        return order === 'desc' ? va - vb : vb - va;
+      });
+
+      arr.forEach(function(row) { container.appendChild(row); });
+      var newOrder = order === 'desc' ? 'asc' : 'desc';
+      btn.setAttribute('data-order', newOrder);
+      btn.classList.toggle('desc', newOrder === 'desc');
+    });
+  });
+
+  // ── 6. Card Collapse/Expand ──
+  var cardTypes = [
+    { selector: '.win-card', titleSel: '.win-title' },
+    { selector: '.friction-card', titleSel: '.friction-title' },
+    { selector: '.feature-card', titleSel: '.feature-title' },
+    { selector: '.horizon-card', titleSel: '.horizon-title' }
+  ];
+
+  cardTypes.forEach(function(type) {
+    document.querySelectorAll(type.selector).forEach(function(card) {
+      var title = card.querySelector(type.titleSel);
+      if (!title) return;
+
+      var header = document.createElement('div');
+      header.className = 'collapsible-header';
+
+      var chevron = document.createElement('span');
+      chevron.className = 'collapse-chevron';
+      chevron.textContent = '\u25BC';
+
+      title.parentNode.insertBefore(header, title);
+      header.appendChild(title);
+      header.appendChild(chevron);
+
+      var body = document.createElement('div');
+      body.className = 'collapsible-body';
+
+      while (header.nextSibling) {
+        body.appendChild(header.nextSibling);
+      }
+      card.appendChild(body);
+
+      header.addEventListener('click', function() {
+        card.classList.toggle('collapsed');
+      });
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
