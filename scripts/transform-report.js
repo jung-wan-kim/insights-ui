@@ -2,51 +2,129 @@
 /**
  * transform-report.js
  *
- * report.html (영문 라이트모드) → report-ko.html (한글 다크모드 대시보드) 변환
- * 외부 의존성 없음 (Node.js fs, path만 사용)
+ * report.html → dark-mode dashboard (English or Korean)
+ * Usage: node transform-report.js --lang en|ko
+ * No external dependencies (Node.js fs, path only)
  */
 
 const fs = require('fs');
 const path = require('path');
 
+// ── CLI args ──
+const args = process.argv.slice(2);
+const langIdx = args.indexOf('--lang');
+const LANG = (langIdx !== -1 && args[langIdx + 1]) ? args[langIdx + 1] : 'en';
+
+if (!['en', 'ko'].includes(LANG)) {
+  console.error('[insights-ui] Unsupported language: ' + LANG);
+  console.error('Supported: en, ko');
+  process.exit(1);
+}
+
 const USAGE_DIR = path.join(process.env.HOME, '.claude', 'usage-data');
 const INPUT_PATH = path.join(USAGE_DIR, 'report.html');
-const OUTPUT_PATH = path.join(USAGE_DIR, 'report-ko.html');
-const TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'report-ko-template.html');
+const OUTPUT_PATH = path.join(USAGE_DIR, 'report-' + LANG + '.html');
+const TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'report-' + LANG + '-template.html');
 
-// ── Korean label translations ──
-const SESSION_TYPE_KO = {
-  'Iterative Refinement': '반복 개선',
-  'Multi Task': '다중 작업',
-  'Exploration': '탐색',
-  'Quick Question': '빠른 질문',
-  'Single Task': '단일 작업',
-  'Debugging': '디버깅',
-  'Code Review': '코드 리뷰'
+// ── i18n labels ──
+const I18N = {
+  en: {
+    sessionType: {},
+    frictionType: {},
+    errorType: {},
+    timePeriod: {
+      'Morning (6-12)': 'Morning (6-12)',
+      'Afternoon (12-18)': 'Afternoon (12-18)',
+      'Evening (18-24)': 'Evening (18-24)',
+      'Night (0-6)': 'Night (0-6)'
+    },
+    timePeriodKeys: {
+      morning: 'Morning (6-12)',
+      afternoon: 'Afternoon (12-18)',
+      evening: 'Evening (18-24)',
+      night: 'Night (0-6)'
+    },
+    noData: 'No data',
+    total: 'Total',
+    locale: 'en-US',
+    log: {
+      notFound: '[insights-ui] report.html not found: ',
+      templateNotFound: '[insights-ui] Template not found: ',
+      parsing: '[insights-ui] Parsing report.html...',
+      extracted: '[insights-ui] Data extracted:',
+      messages: '  - Messages: ',
+      sessions: '  - Sessions: ',
+      period: '  - Period: ',
+      bigWins: '  - Big Wins: ',
+      frictions: '  - Frictions: ',
+      features: '  - Features: ',
+      horizons: '  - Horizons: ',
+      charts: '  - Charts: ',
+      rendering: '[insights-ui] Rendering template...',
+      done: '[insights-ui] Done: ',
+      openWith: '[insights-ui] Open with: open '
+    }
+  },
+  ko: {
+    sessionType: {
+      'Iterative Refinement': '반복 개선',
+      'Multi Task': '다중 작업',
+      'Exploration': '탐색',
+      'Quick Question': '빠른 질문',
+      'Single Task': '단일 작업',
+      'Debugging': '디버깅',
+      'Code Review': '코드 리뷰'
+    },
+    frictionType: {
+      'Wrong Approach': '잘못된 접근',
+      'Misunderstood Request': '요청 오해',
+      'Slow Response': '느린 응답',
+      'Tool Error': '도구 오류'
+    },
+    errorType: {
+      'Command Failed': '명령 실패',
+      'Other': '기타',
+      'File Not Found': '파일 미발견',
+      'User Rejected': '사용자 거부',
+      'File Too Large': '파일 과대',
+      'Edit Failed': '편집 실패'
+    },
+    timePeriod: {
+      'Morning (6-12)': '오전 (6-12)',
+      'Afternoon (12-18)': '오후 (12-18)',
+      'Evening (18-24)': '저녁 (18-24)',
+      'Night (0-6)': '심야 (0-6)'
+    },
+    timePeriodKeys: {
+      morning: '오전 (6-12)',
+      afternoon: '오후 (12-18)',
+      evening: '저녁 (18-24)',
+      night: '심야 (0-6)'
+    },
+    noData: '데이터 없음',
+    total: '전체',
+    locale: 'ko-KR',
+    log: {
+      notFound: '[insights-ui] report.html이 없습니다: ',
+      templateNotFound: '[insights-ui] 템플릿 파일이 없습니다: ',
+      parsing: '[insights-ui] report.html 파싱 중...',
+      extracted: '[insights-ui] 데이터 추출 완료:',
+      messages: '  - 메시지: ',
+      sessions: '  - 세션: ',
+      period: '  - 기간: ',
+      bigWins: '  - Big Wins: ',
+      frictions: '  - Frictions: ',
+      features: '  - Features: ',
+      horizons: '  - Horizons: ',
+      charts: '  - Charts: ',
+      rendering: '[insights-ui] 템플릿 렌더링 중...',
+      done: '[insights-ui] 변환 완료: ',
+      openWith: '[insights-ui] open '
+    }
+  }
 };
 
-const FRICTION_TYPE_KO = {
-  'Wrong Approach': '잘못된 접근',
-  'Misunderstood Request': '요청 오해',
-  'Slow Response': '느린 응답',
-  'Tool Error': '도구 오류'
-};
-
-const ERROR_TYPE_KO = {
-  'Command Failed': '명령 실패',
-  'Other': '기타',
-  'File Not Found': '파일 미발견',
-  'User Rejected': '사용자 거부',
-  'File Too Large': '파일 과대',
-  'Edit Failed': '편집 실패'
-};
-
-const TIME_PERIOD_KO = {
-  'Morning (6-12)': '오전 (6-12)',
-  'Afternoon (12-18)': '오후 (12-18)',
-  'Evening (18-24)': '저녁 (18-24)',
-  'Night (0-6)': '심야 (0-6)'
-};
+const L = I18N[LANG];
 
 // ── Utility functions ──
 function num(str) {
@@ -55,7 +133,7 @@ function num(str) {
 }
 
 function fmt(n) {
-  return n.toLocaleString('ko-KR');
+  return n.toLocaleString(L.locale);
 }
 
 function escapeHtml(s) {
@@ -67,7 +145,6 @@ function parseReport(html) {
   const data = {};
   let m;
 
-  // Meta: subtitle line
   const subtitleMatch = html.match(/<p class="subtitle">(.*?)<\/p>/);
   if (subtitleMatch) {
     const sub = subtitleMatch[1];
@@ -80,7 +157,6 @@ function parseReport(html) {
     data.dateTo = dateMatch ? dateMatch[2] : '';
   }
 
-  // Stats row
   const statsRegex = /<div class="stat-value">(.*?)<\/div>\s*<div class="stat-label">(.*?)<\/div>/g;
   data.stats = {};
   while ((m = statsRegex.exec(html)) !== null) {
@@ -88,18 +164,15 @@ function parseReport(html) {
     data.stats[label] = m[1].trim();
   }
 
-  // Lines changed
   const linesStr = data.stats['lines'] || '+0/-0';
   const linesMatch = linesStr.match(/\+?([\d,]+)\s*\/\s*-?([\d,]+)/);
   data.linesAdded = linesMatch ? num(linesMatch[1]) : 0;
   data.linesRemoved = linesMatch ? num(linesMatch[2]) : 0;
 
-  // Files, Days, Msgs/Day
   data.filesChanged = num(data.stats['files'] || '0');
   data.days = num(data.stats['days'] || '0');
   data.msgsPerDay = data.stats['msgs/day'] || '0';
 
-  // At a Glance sections
   data.glance = {};
   const glanceSections = html.match(/<div class="glance-section">[\s\S]*?<\/div>/g) || [];
   for (const sec of glanceSections) {
@@ -112,7 +185,6 @@ function parseReport(html) {
     }
   }
 
-  // Parse bar charts - find chart-title then collect bar-rows
   data.charts = {};
   const chartBlocks = html.split(/<div class="chart-title"[^>]*>/);
   for (let i = 1; i < chartBlocks.length; i++) {
@@ -136,14 +208,12 @@ function parseReport(html) {
     }
   }
 
-  // Big Wins
   data.bigWins = [];
   const winRegex = /<div class="big-win-title">(.*?)<\/div>\s*<div class="big-win-desc">([\s\S]*?)<\/div>/g;
   while ((m = winRegex.exec(html)) !== null) {
     data.bigWins.push({ title: m[1].trim(), desc: m[2].trim() });
   }
 
-  // Friction categories
   data.frictions = [];
   const frictionRegex = /<div class="friction-title">(.*?)<\/div>\s*<div class="friction-desc">([\s\S]*?)<\/div>\s*(?:<ul class="friction-examples">([\s\S]*?)<\/ul>)?/g;
   while ((m = frictionRegex.exec(html)) !== null) {
@@ -158,21 +228,18 @@ function parseReport(html) {
     data.frictions.push({ title: m[1].trim(), desc: m[2].trim(), examples });
   }
 
-  // Features
   data.features = [];
   const featureRegex = /<div class="feature-title">(.*?)<\/div>\s*<div class="feature-oneliner">([\s\S]*?)<\/div>\s*<div class="feature-why">([\s\S]*?)<\/div>/g;
   while ((m = featureRegex.exec(html)) !== null) {
     data.features.push({ title: m[1].trim(), desc: m[2].trim(), why: m[3].trim() });
   }
 
-  // Horizons
   data.horizons = [];
   const horizonRegex = /<div class="horizon-title">(.*?)<\/div>\s*<div class="horizon-possible">([\s\S]*?)<\/div>\s*<div class="horizon-tip">([\s\S]*?)<\/div>/g;
   while ((m = horizonRegex.exec(html)) !== null) {
     data.horizons.push({ title: m[1].trim(), desc: m[2].trim(), tip: m[3].trim() });
   }
 
-  // Narrative
   const narrativeBlock = html.match(/<div class="narrative">([\s\S]*?)<\/div>\s*(?:<div class="key-insight">|$)/);
   data.narrative = '';
   if (narrativeBlock) {
@@ -184,21 +251,17 @@ function parseReport(html) {
     data.narrative = paragraphs.join('\n\n');
   }
 
-  // Key insight
   const keyInsight = html.match(/<div class="key-insight">([\s\S]*?)<\/div>/);
   data.keyInsight = keyInsight ? keyInsight[1].replace(/<[^>]+>/g, '').trim() : '';
 
-  // rawHourCounts (inline JS)
   const hourMatch = html.match(/rawHourCounts\s*=\s*(\{[^}]+\})/);
   data.rawHourCounts = hourMatch ? JSON.parse(hourMatch[1]) : {};
 
-  // Response time
   const medianMatch = html.match(/Median:\s*([\d.]+)s/);
   const avgMatch = html.match(/Average:\s*([\d.]+)s/);
   data.medianResponseTime = medianMatch ? parseFloat(medianMatch[1]) : 0;
   data.avgResponseTime = avgMatch ? parseFloat(avgMatch[1]) : 0;
 
-  // Multi-clauding
   const multiRegex = /<div style="font-size: 24px; font-weight: 700; color: #7c3aed;">([\d,%]+)<\/div>\s*<div[^>]*>(.*?)<\/div>/g;
   data.multiClauding = { overlapEvents: 0, sessionsInvolved: 0, pctMessages: 0 };
   while ((m = multiRegex.exec(html)) !== null) {
@@ -209,7 +272,6 @@ function parseReport(html) {
     else if (label.includes('Messages')) data.multiClauding.pctMessages = parseInt(val) || 0;
   }
 
-  // Fun ending
   const funHeadline = html.match(/<div class="fun-headline">([\s\S]*?)<\/div>/);
   const funDetail = html.match(/<div class="fun-detail">([\s\S]*?)<\/div>/);
   data.funEnding = {
@@ -217,7 +279,6 @@ function parseReport(html) {
     detail: funDetail ? funDetail[1].replace(/<[^>]+>/g, '').trim() : ''
   };
 
-  // Project areas
   data.projectAreas = [];
   const areaRegex = /<span class="area-name">(.*?)<\/span>\s*<span class="area-count">(.*?)<\/span>[\s\S]*?<div class="area-desc">([\s\S]*?)<\/div>/g;
   while ((m = areaRegex.exec(html)) !== null) {
@@ -228,7 +289,6 @@ function parseReport(html) {
     });
   }
 
-  // Section intros
   const winsIntro = html.match(/<h2 id="section-wins">[\s\S]*?<p class="section-intro">([\s\S]*?)<\/p>/);
   data.winsIntro = winsIntro ? winsIntro[1].trim() : '';
   const frictionIntro = html.match(/<h2 id="section-friction">[\s\S]*?<p class="section-intro">([\s\S]*?)<\/p>/);
@@ -239,7 +299,7 @@ function parseReport(html) {
   return data;
 }
 
-// ── KST conversion (PT+17) ──
+// ── Time conversion ──
 function convertHourCountsToKST(rawCounts) {
   const kst = {};
   for (const [hour, count] of Object.entries(rawCounts)) {
@@ -250,40 +310,46 @@ function convertHourCountsToKST(rawCounts) {
 }
 
 function getTimePeriodCounts(hourCounts) {
-  const periods = {
-    '오전 (6-12)': 0, '오후 (12-18)': 0,
-    '저녁 (18-24)': 0, '심야 (0-6)': 0
-  };
+  const keys = L.timePeriodKeys;
+  const periods = {};
+  periods[keys.morning] = 0;
+  periods[keys.afternoon] = 0;
+  periods[keys.evening] = 0;
+  periods[keys.night] = 0;
+
   for (const [hour, count] of Object.entries(hourCounts)) {
     const h = parseInt(hour);
-    if (h >= 6 && h < 12) periods['오전 (6-12)'] += count;
-    else if (h >= 12 && h < 18) periods['오후 (12-18)'] += count;
-    else if (h >= 18 && h < 24) periods['저녁 (18-24)'] += count;
-    else periods['심야 (0-6)'] += count;
+    if (h >= 6 && h < 12) periods[keys.morning] += count;
+    else if (h >= 12 && h < 18) periods[keys.afternoon] += count;
+    else if (h >= 18 && h < 24) periods[keys.evening] += count;
+    else periods[keys.night] += count;
   }
   return periods;
 }
 
 // ── Bar HTML generation ──
-function generateBarRows(bars, colorOverride) {
-  if (!bars || bars.length === 0) return '<div style="color:var(--text-dim);font-size:12px;">데이터 없음</div>';
+function translateLabel(label) {
+  return L.sessionType[label] || L.frictionType[label] || L.errorType[label] || L.timePeriod[label] || label;
+}
+
+function generateBarRows(bars) {
+  if (!bars || bars.length === 0) return '<div style="color:var(--text-dim);font-size:12px;">' + L.noData + '</div>';
   const maxVal = Math.max(...bars.map(b => b.value)) || 1;
   return bars.map(b => {
     const width = ((b.value / maxVal) * 100).toFixed(1);
-    const color = colorOverride || b.color;
-    const label = SESSION_TYPE_KO[b.label] || FRICTION_TYPE_KO[b.label] || ERROR_TYPE_KO[b.label] || TIME_PERIOD_KO[b.label] || b.label;
-    return `      <div class="bar-row">
-        <div class="bar-label">${label}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${width}%;background:${color}"></div></div>
-        <div class="bar-value">${fmt(b.value)}</div>
-      </div>`;
+    const label = translateLabel(b.label);
+    return '      <div class="bar-row">\n' +
+      '        <div class="bar-label">' + label + '</div>\n' +
+      '        <div class="bar-track"><div class="bar-fill" style="width:' + width + '%;background:' + b.color + '"></div></div>\n' +
+      '        <div class="bar-value">' + fmt(b.value) + '</div>\n' +
+      '      </div>';
   }).join('\n');
 }
 
 // ── SVG Donut ──
 function generateDonutSVG(items, size) {
   size = size || 120;
-  const total = items.reduce(function(s, i) { return s + i.value; }, 0);
+  var total = items.reduce(function(s, i) { return s + i.value; }, 0);
   if (total === 0) return '';
 
   var cx = size / 2, cy = size / 2, r = (size / 2) - 8;
@@ -304,7 +370,7 @@ function generateDonutSVG(items, size) {
     '    <circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16"/>\n' +
     '    ' + segments.join('\n    ') + '\n' +
     '    <text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" fill="#f0f6fc" font-size="18" font-weight="700">' + fmt(total) + '</text>\n' +
-    '    <text x="' + cx + '" y="' + (cy + 14) + '" text-anchor="middle" fill="#8b949e" font-size="10">전체</text>\n' +
+    '    <text x="' + cx + '" y="' + (cy + 14) + '" text-anchor="middle" fill="#8b949e" font-size="10">' + L.total + '</text>\n' +
     '  </svg>';
 
   var legend = items.slice(0, 6).map(function(item, i) {
@@ -326,7 +392,11 @@ function calculateDerived(data) {
     var to = new Date(data.dateTo);
     var diffMs = to - from;
     data.totalDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    data.dateRangeKo = data.dateFrom + ' ~ ' + data.dateTo;
+    if (LANG === 'ko') {
+      data.dateRange = data.dateFrom + ' ~ ' + data.dateTo;
+    } else {
+      data.dateRange = data.dateFrom + ' to ' + data.dateTo;
+    }
   }
 }
 
@@ -334,17 +404,16 @@ function calculateDerived(data) {
 function renderTemplate(template, data) {
   var html = template;
 
-  // KST hour data
-  var kstCounts = convertHourCountsToKST(data.rawHourCounts);
-  var timePeriods = getTimePeriodCounts(kstCounts);
+  // Time data: KST for ko, PT (original) for en
+  var hourCounts = LANG === 'ko' ? convertHourCountsToKST(data.rawHourCounts) : data.rawHourCounts;
+  var timePeriods = getTimePeriodCounts(hourCounts);
 
-  // Simple value replacements
   var replacements = {
     '{{TOTAL_MESSAGES}}': fmt(data.totalMessages),
     '{{TOTAL_SESSIONS}}': fmt(data.totalSessions),
     '{{DATE_FROM}}': data.dateFrom,
     '{{DATE_TO}}': data.dateTo,
-    '{{DATE_RANGE_KO}}': data.dateRangeKo || '',
+    '{{DATE_RANGE}}': data.dateRange || '',
     '{{TOTAL_DAYS}}': String(data.totalDays || data.days),
     '{{LINES_ADDED}}': fmt(data.linesAdded),
     '{{LINES_REMOVED}}': fmt(data.linesRemoved),
@@ -373,7 +442,6 @@ function renderTemplate(template, data) {
     html = html.split(key).join(replacements[key]);
   }
 
-  // Chart bar rows
   var chartMap = {
     '{{CHART_TOOLS}}': 'Top Tools Used',
     '{{CHART_LANGUAGES}}': 'Languages',
@@ -391,7 +459,7 @@ function renderTemplate(template, data) {
     html = html.split(placeholder).join(generateBarRows(chartData));
   }
 
-  // Time of day bars (KST)
+  // Time of day bars
   var maxTimePeriod = Math.max.apply(null, Object.values(timePeriods).concat([1]));
   var timeBarHtml = Object.keys(timePeriods).map(function(label) {
     var count = timePeriods[label];
@@ -400,7 +468,6 @@ function renderTemplate(template, data) {
   }).join('\n');
   html = html.split('{{CHART_TIME_OF_DAY}}').join(timeBarHtml);
 
-  // Response time bars
   var responseData = data.charts['User Response Time Distribution'] || [];
   html = html.split('{{CHART_RESPONSE_TIME}}').join(generateBarRows(responseData));
 
@@ -411,7 +478,7 @@ function renderTemplate(template, data) {
   var langData = (data.charts['Languages'] || []).map(function(b) { return { label: b.label, value: b.value }; });
   html = html.split('{{DONUT_LANGUAGES}}').join(generateDonutSVG(langData));
 
-  // Repeating blocks - Big Wins
+  // Repeating blocks
   var bigWinMatch = html.match(/{{#EACH_BIG_WIN}}([\s\S]*?){{\/EACH_BIG_WIN}}/);
   if (bigWinMatch) {
     var winHtml = data.bigWins.map(function(w) {
@@ -420,7 +487,6 @@ function renderTemplate(template, data) {
     html = html.replace(/{{#EACH_BIG_WIN}}[\s\S]*?{{\/EACH_BIG_WIN}}/, winHtml);
   }
 
-  // Frictions
   var frictionMatch = html.match(/{{#EACH_FRICTION}}([\s\S]*?){{\/EACH_FRICTION}}/);
   if (frictionMatch) {
     var frictionHtml = data.frictions.map(function(f) {
@@ -430,7 +496,6 @@ function renderTemplate(template, data) {
     html = html.replace(/{{#EACH_FRICTION}}[\s\S]*?{{\/EACH_FRICTION}}/, frictionHtml);
   }
 
-  // Features
   var featureMatch = html.match(/{{#EACH_FEATURE}}([\s\S]*?){{\/EACH_FEATURE}}/);
   if (featureMatch) {
     var featureHtml = data.features.map(function(f) {
@@ -439,7 +504,6 @@ function renderTemplate(template, data) {
     html = html.replace(/{{#EACH_FEATURE}}[\s\S]*?{{\/EACH_FEATURE}}/, featureHtml);
   }
 
-  // Horizons
   var horizonMatch = html.match(/{{#EACH_HORIZON}}([\s\S]*?){{\/EACH_HORIZON}}/);
   if (horizonMatch) {
     var horizonHtml = data.horizons.map(function(h) {
@@ -448,7 +512,6 @@ function renderTemplate(template, data) {
     html = html.replace(/{{#EACH_HORIZON}}[\s\S]*?{{\/EACH_HORIZON}}/, horizonHtml);
   }
 
-  // Project Areas
   var areaMatch = html.match(/{{#EACH_PROJECT_AREA}}([\s\S]*?){{\/EACH_PROJECT_AREA}}/);
   if (areaMatch) {
     var areaHtml = data.projectAreas.map(function(a) {
@@ -457,21 +520,19 @@ function renderTemplate(template, data) {
     html = html.replace(/{{#EACH_PROJECT_AREA}}[\s\S]*?{{\/EACH_PROJECT_AREA}}/, areaHtml);
   }
 
-  // Sidebar top tools
+  // Sidebar
   var topTools = (data.charts['Top Tools Used'] || []).slice(0, 5);
   var sidebarToolsHtml = topTools.map(function(t) {
     return '      <div class="sidebar-stat"><span class="sidebar-stat-label">' + t.label + '</span><span class="sidebar-stat-value">' + fmt(t.value) + '</span></div>';
   }).join('\n');
   html = html.split('{{SIDEBAR_TOP_TOOLS}}').join(sidebarToolsHtml);
 
-  // Sidebar languages
   var topLangs = (data.charts['Languages'] || []).slice(0, 5);
   var sidebarLangsHtml = topLangs.map(function(l) {
     return '      <div class="sidebar-stat"><span class="sidebar-stat-label">' + l.label + '</span><span class="sidebar-stat-value">' + fmt(l.value) + '</span></div>';
   }).join('\n');
   html = html.split('{{SIDEBAR_LANGUAGES}}').join(sidebarLangsHtml);
 
-  // Total tool calls
   var totalToolCalls = (data.charts['Top Tools Used'] || []).reduce(function(s, t) { return s + t.value; }, 0);
   html = html.split('{{TOTAL_TOOL_CALLS}}').join(fmt(totalToolCalls));
 
@@ -481,38 +542,38 @@ function renderTemplate(template, data) {
 // ── Main ──
 function main() {
   if (!fs.existsSync(INPUT_PATH)) {
-    console.error('[insights-ko] report.html이 없습니다: ' + INPUT_PATH);
-    console.error('먼저 /insights 명령어를 실행하여 리포트를 생성하세요.');
+    console.error(L.log.notFound + INPUT_PATH);
+    console.error('Run /insights first to generate report.html');
     process.exit(1);
   }
 
   if (!fs.existsSync(TEMPLATE_PATH)) {
-    console.error('[insights-ko] 템플릿 파일이 없습니다: ' + TEMPLATE_PATH);
+    console.error(L.log.templateNotFound + TEMPLATE_PATH);
     process.exit(1);
   }
 
-  console.log('[insights-ko] report.html 파싱 중...');
+  console.log(L.log.parsing);
   var reportHtml = fs.readFileSync(INPUT_PATH, 'utf-8');
   var data = parseReport(reportHtml);
   calculateDerived(data);
 
-  console.log('[insights-ko] 데이터 추출 완료:');
-  console.log('  - 메시지: ' + fmt(data.totalMessages));
-  console.log('  - 세션: ' + fmt(data.totalSessions));
-  console.log('  - 기간: ' + data.dateRangeKo);
-  console.log('  - Big Wins: ' + data.bigWins.length + '개');
-  console.log('  - Frictions: ' + data.frictions.length + '개');
-  console.log('  - Features: ' + data.features.length + '개');
-  console.log('  - Horizons: ' + data.horizons.length + '개');
-  console.log('  - Charts: ' + Object.keys(data.charts).length + '개');
+  console.log(L.log.extracted);
+  console.log(L.log.messages + fmt(data.totalMessages));
+  console.log(L.log.sessions + fmt(data.totalSessions));
+  console.log(L.log.period + data.dateRange);
+  console.log(L.log.bigWins + data.bigWins.length);
+  console.log(L.log.frictions + data.frictions.length);
+  console.log(L.log.features + data.features.length);
+  console.log(L.log.horizons + data.horizons.length);
+  console.log(L.log.charts + Object.keys(data.charts).length);
 
-  console.log('[insights-ko] 템플릿 렌더링 중...');
+  console.log(L.log.rendering);
   var template = fs.readFileSync(TEMPLATE_PATH, 'utf-8');
   var output = renderTemplate(template, data);
 
   fs.writeFileSync(OUTPUT_PATH, output, 'utf-8');
-  console.log('[insights-ko] 변환 완료: ' + OUTPUT_PATH);
-  console.log('[insights-ko] open ~/.claude/usage-data/report-ko.html 으로 확인하세요.');
+  console.log(L.log.done + OUTPUT_PATH);
+  console.log(L.log.openWith + OUTPUT_PATH);
 }
 
 main();

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Claude Code 인사이트 리포트</title>
+  <title>Claude Code Insights Report</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -256,30 +256,30 @@
 <!-- Hero -->
 <div class="hero">
   <div class="hero-content">
-    <h1>Claude Code 인사이트</h1>
-    <p class="subtitle">{{DATE_RANGE}} | {{TOTAL_DAYS}}일간의 개발 여정</p>
+    <h1>Claude Code Insights</h1>
+    <p class="subtitle">{{DATE_RANGE}} | {{TOTAL_DAYS}} days of development</p>
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="val">{{TOTAL_SESSIONS}}</div>
-        <div class="lbl">세션</div>
+        <div class="lbl">Sessions</div>
       </div>
       <div class="hero-stat">
         <div class="val">{{TOTAL_MESSAGES}}</div>
-        <div class="lbl">메시지</div>
+        <div class="lbl">Messages</div>
       </div>
       <div class="hero-stat">
         <div class="val">{{FILES_CHANGED}}</div>
-        <div class="lbl">파일</div>
+        <div class="lbl">Files</div>
       </div>
       <div class="hero-stat">
         <div class="val">{{TOTAL_DAYS}}</div>
-        <div class="lbl">일</div>
+        <div class="lbl">Days</div>
       </div>
     </div>
     <div style="display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:11px; color:var(--text-dim);">
-      <span>일평균 <strong style="color:var(--text);">{{SESSIONS_PER_DAY}}</strong> 세션</span>
+      <span>Avg <strong style="color:var(--text);">{{SESSIONS_PER_DAY}}</strong> sessions/day</span>
       <span>|</span>
-      <span>일평균 <strong style="color:var(--text);">{{MESSAGES_PER_DAY}}</strong> 메시지</span>
+      <span>Avg <strong style="color:var(--text);">{{MESSAGES_PER_DAY}}</strong> msgs/day</span>
       <span>|</span>
       <span style="color:var(--green);">+{{LINES_ADDED}}</span> / <span style="color:var(--red);">-{{LINES_REMOVED}}</span> lines
     </div>
@@ -289,14 +289,14 @@
 <!-- Navigation -->
 <nav class="nav-bar">
   <div class="nav-inner">
-    <a href="#overview" class="nav-link">현황</a>
-    <a href="#tools" class="nav-link">도구</a>
-    <a href="#languages" class="nav-link">언어</a>
-    <a href="#activity" class="nav-link">활동</a>
-    <a href="#wins" class="nav-link">성과</a>
-    <a href="#friction" class="nav-link">개선</a>
-    <a href="#features" class="nav-link">추천</a>
-    <a href="#horizon" class="nav-link">전망</a>
+    <a href="#overview" class="nav-link">Overview</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#languages" class="nav-link">Languages</a>
+    <a href="#activity" class="nav-link">Activity</a>
+    <a href="#wins" class="nav-link">Wins</a>
+    <a href="#friction" class="nav-link">Friction</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#horizon" class="nav-link">Horizon</a>
   </div>
 </nav>
 
@@ -305,49 +305,49 @@
   <!-- Left Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-title">핵심 지표</div>
-      <div class="sidebar-stat"><span class="sidebar-stat-label">세션</span><span class="sidebar-stat-value">{{TOTAL_SESSIONS}}</span></div>
-      <div class="sidebar-stat"><span class="sidebar-stat-label">메시지</span><span class="sidebar-stat-value">{{TOTAL_MESSAGES}}</span></div>
-      <div class="sidebar-stat"><span class="sidebar-stat-label">파일</span><span class="sidebar-stat-value">{{FILES_CHANGED}}</span></div>
-      <div class="sidebar-stat"><span class="sidebar-stat-label">도구 호출</span><span class="sidebar-stat-value">{{TOTAL_TOOL_CALLS}}</span></div>
-      <div class="sidebar-stat"><span class="sidebar-stat-label">코드 변경</span><span class="sidebar-stat-value" style="color:var(--green)">+{{LINES_ADDED}} / <span style="color:var(--red)">-{{LINES_REMOVED}}</span></span></div>
+      <div class="sidebar-title">Key Metrics</div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Sessions</span><span class="sidebar-stat-value">{{TOTAL_SESSIONS}}</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Messages</span><span class="sidebar-stat-value">{{TOTAL_MESSAGES}}</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Files</span><span class="sidebar-stat-value">{{FILES_CHANGED}}</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Tool Calls</span><span class="sidebar-stat-value">{{TOTAL_TOOL_CALLS}}</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Lines Changed</span><span class="sidebar-stat-value" style="color:var(--green)">+{{LINES_ADDED}} / <span style="color:var(--red)">-{{LINES_REMOVED}}</span></span></div>
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-title">요약</div>
+      <div class="sidebar-title">Summary</div>
       <div class="sidebar-highlight">
-        <div class="sidebar-highlight-title">잘 되고 있는 것</div>
+        <div class="sidebar-highlight-title">What's Working</div>
         <div class="sidebar-highlight-text">{{GLANCE_WORKING}}</div>
       </div>
       <div class="sidebar-highlight" style="background:rgba(248,81,73,0.1);">
-        <div class="sidebar-highlight-title" style="color:var(--red);">개선 필요</div>
+        <div class="sidebar-highlight-title" style="color:var(--red);">Needs Improvement</div>
         <div class="sidebar-highlight-text">{{GLANCE_HINDERING}}</div>
       </div>
       <div class="sidebar-highlight" style="background:rgba(52,211,153,0.1);">
-        <div class="sidebar-highlight-title" style="color:var(--green);">빠른 개선</div>
+        <div class="sidebar-highlight-title" style="color:var(--green);">Quick Wins</div>
         <div class="sidebar-highlight-text">{{GLANCE_QUICKWINS}}</div>
       </div>
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-title">도구 TOP 5</div>
+      <div class="sidebar-title">Top 5 Tools</div>
 {{SIDEBAR_TOP_TOOLS}}
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-title">언어 분포</div>
+      <div class="sidebar-title">Languages</div>
 {{SIDEBAR_LANGUAGES}}
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-title">바로가기</div>
-      <a href="#overview" class="sidebar-link">📊 전체 현황</a>
-      <a href="#tools" class="sidebar-link">🔧 도구 사용량</a>
-      <a href="#activity" class="sidebar-link">⏰ 활동 패턴</a>
-      <a href="#wins" class="sidebar-link">🏆 인상적인 성과</a>
-      <a href="#friction" class="sidebar-link">⚡ 개선 포인트</a>
-      <a href="#features" class="sidebar-link">💡 추천 기능</a>
-      <a href="#horizon" class="sidebar-link">🚀 미래 전망</a>
+      <div class="sidebar-title">Navigate</div>
+      <a href="#overview" class="sidebar-link">Overview</a>
+      <a href="#tools" class="sidebar-link">Tool Usage</a>
+      <a href="#activity" class="sidebar-link">Activity Patterns</a>
+      <a href="#wins" class="sidebar-link">Big Wins</a>
+      <a href="#friction" class="sidebar-link">Friction Points</a>
+      <a href="#features" class="sidebar-link">Recommended Features</a>
+      <a href="#horizon" class="sidebar-link">Future Horizon</a>
     </div>
   </aside>
 
@@ -357,25 +357,25 @@
 
     <!-- Overview -->
     <div class="section" id="overview">
-      <div class="section-title"><span class="icon">📊</span> 전체 현황</div>
-      <div class="section-desc">{{TOTAL_DAYS}}일간의 Claude Code 사용 데이터를 기반으로 한 종합 분석입니다.</div>
+      <div class="section-title"><span class="icon">Overview</span></div>
+      <div class="section-desc">Comprehensive analysis based on {{TOTAL_DAYS}} days of Claude Code usage data.</div>
 
       <div style="background: rgba(99,102,241,0.1); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: var(--accent); margin-bottom: 8px;">
-        <strong>핵심 패턴:</strong> {{KEY_INSIGHT}}
+        <strong>Key Pattern:</strong> {{KEY_INSIGHT}}
       </div>
 
       <!-- At a Glance -->
       <div class="glance">
-        <div class="glance-title">한눈에 보기</div>
-        <div class="glance-item"><strong>잘 되는 것:</strong> {{GLANCE_WORKING}}</div>
-        <div class="glance-item"><strong>개선 필요:</strong> {{GLANCE_HINDERING}}</div>
-        <div class="glance-item"><strong>빠른 개선:</strong> {{GLANCE_QUICKWINS}}</div>
-        <div class="glance-item"><strong>미래 워크플로우:</strong> {{GLANCE_AMBITIOUS}}</div>
+        <div class="glance-title">At a Glance</div>
+        <div class="glance-item"><strong>What's Working:</strong> {{GLANCE_WORKING}}</div>
+        <div class="glance-item"><strong>Needs Improvement:</strong> {{GLANCE_HINDERING}}</div>
+        <div class="glance-item"><strong>Quick Wins:</strong> {{GLANCE_QUICKWINS}}</div>
+        <div class="glance-item"><strong>Ambitious Workflows:</strong> {{GLANCE_AMBITIOUS}}</div>
       </div>
 
       <!-- Project Areas -->
       <div class="card">
-        <div class="chart-title">주요 작업 영역</div>
+        <div class="chart-title">Project Areas</div>
 {{#EACH_PROJECT_AREA}}
         <div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -390,27 +390,27 @@
 
     <!-- Tools -->
     <div class="section" id="tools">
-      <div class="section-title"><span class="icon">🔧</span> 도구 사용량</div>
-      <div class="section-desc">가장 많이 사용한 도구와 도넛 차트입니다.</div>
+      <div class="section-title"><span class="icon">Tool Usage</span></div>
+      <div class="section-desc">Most frequently used tools and their distribution.</div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="chart-title">도구 사용 순위</div>
+          <div class="chart-title">Tool Rankings</div>
 {{CHART_TOOLS}}
         </div>
         <div class="card">
-          <div class="chart-title">도구 분포</div>
+          <div class="chart-title">Tool Distribution</div>
 {{DONUT_TOOLS}}
         </div>
       </div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="chart-title">요구 유형</div>
+          <div class="chart-title">Request Types</div>
 {{CHART_WHAT_WANTED}}
         </div>
         <div class="card">
-          <div class="chart-title">도구 오류</div>
+          <div class="chart-title">Tool Errors</div>
 {{CHART_TOOL_ERRORS}}
         </div>
       </div>
@@ -418,39 +418,39 @@
 
     <!-- Languages -->
     <div class="section" id="languages">
-      <div class="section-title"><span class="icon">💻</span> 언어 분포</div>
-      <div class="section-desc">작업에 사용된 프로그래밍 언어 분석입니다.</div>
+      <div class="section-title"><span class="icon">Languages</span></div>
+      <div class="section-desc">Programming language distribution across sessions.</div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="chart-title">언어 사용 순위</div>
+          <div class="chart-title">Language Rankings</div>
 {{CHART_LANGUAGES}}
         </div>
         <div class="card">
-          <div class="chart-title">언어 분포</div>
+          <div class="chart-title">Language Distribution</div>
 {{DONUT_LANGUAGES}}
         </div>
       </div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="chart-title">세션 유형</div>
+          <div class="chart-title">Session Types</div>
 {{CHART_SESSION_TYPES}}
         </div>
         <div class="card">
-          <div class="chart-title">병렬 세션 (Multi-Clauding)</div>
+          <div class="chart-title">Multi-Clauding</div>
           <div style="display: flex; gap: 16px; margin: 12px 0;">
             <div style="text-align: center;">
               <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">{{MULTI_OVERLAP}}</div>
-              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">중복 이벤트</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Overlap Events</div>
             </div>
             <div style="text-align: center;">
               <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">{{MULTI_SESSIONS}}</div>
-              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">관련 세션</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Sessions Involved</div>
             </div>
             <div style="text-align: center;">
               <div style="font-size: 20px; font-weight: 700; color: #c4b5fd;">{{MULTI_PCT}}%</div>
-              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">메시지 비율</div>
+              <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Message Ratio</div>
             </div>
           </div>
         </div>
@@ -459,19 +459,19 @@
 
     <!-- Activity -->
     <div class="section" id="activity">
-      <div class="section-title"><span class="icon">⏰</span> 활동 패턴</div>
-      <div class="section-desc">시간대별 활동과 응답 시간 분석입니다. (KST 기준)</div>
+      <div class="section-title"><span class="icon">Activity Patterns</span></div>
+      <div class="section-desc">Time-of-day activity and response time analysis (PT).</div>
 
       <div class="grid-2">
         <div class="card">
-          <div class="chart-title">시간대별 메시지 (KST)</div>
+          <div class="chart-title">Messages by Time of Day</div>
 {{CHART_TIME_OF_DAY}}
         </div>
         <div class="card">
-          <div class="chart-title">응답 시간 분포</div>
+          <div class="chart-title">Response Time Distribution</div>
 {{CHART_RESPONSE_TIME}}
           <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
-            중앙값: {{MEDIAN_RESPONSE}}초 &bull; 평균: {{AVG_RESPONSE}}초
+            Median: {{MEDIAN_RESPONSE}}s &bull; Average: {{AVG_RESPONSE}}s
           </div>
         </div>
       </div>
@@ -479,7 +479,7 @@
 
     <!-- Wins -->
     <div class="section" id="wins">
-      <div class="section-title"><span class="icon">🏆</span> 인상적인 성과</div>
+      <div class="section-title"><span class="icon">Big Wins</span></div>
       <div class="section-desc">{{WINS_INTRO}}</div>
 
 {{#EACH_BIG_WIN}}
@@ -491,11 +491,11 @@
 
       <div class="grid-2" style="margin-top: 12px;">
         <div class="card">
-          <div class="chart-title">도움이 된 것</div>
+          <div class="chart-title">What Helped Most</div>
 {{CHART_WHAT_HELPED}}
         </div>
         <div class="card">
-          <div class="chart-title">성과 달성도</div>
+          <div class="chart-title">Outcomes</div>
 {{CHART_OUTCOMES}}
         </div>
       </div>
@@ -503,7 +503,7 @@
 
     <!-- Friction -->
     <div class="section" id="friction">
-      <div class="section-title"><span class="icon">⚡</span> 개선 포인트</div>
+      <div class="section-title"><span class="icon">Friction Points</span></div>
       <div class="section-desc">{{FRICTION_INTRO}}</div>
 
 {{#EACH_FRICTION}}
@@ -518,11 +518,11 @@
 
       <div class="grid-2" style="margin-top: 12px;">
         <div class="card">
-          <div class="chart-title">주요 마찰 유형</div>
+          <div class="chart-title">Primary Friction Types</div>
 {{CHART_FRICTION_TYPES}}
         </div>
         <div class="card">
-          <div class="chart-title">추정 만족도</div>
+          <div class="chart-title">Inferred Satisfaction</div>
 {{CHART_SATISFACTION}}
         </div>
       </div>
@@ -530,8 +530,8 @@
 
     <!-- Features -->
     <div class="section" id="features">
-      <div class="section-title"><span class="icon">💡</span> 추천 기능</div>
-      <div class="section-desc">현재 사용 패턴을 기반으로 추천하는 Claude Code 기능입니다.</div>
+      <div class="section-title"><span class="icon">Recommended Features</span></div>
+      <div class="section-desc">Claude Code features recommended based on your usage patterns.</div>
 
 {{#EACH_FEATURE}}
       <div class="feature-card">
@@ -544,7 +544,7 @@
 
     <!-- Horizon -->
     <div class="section" id="horizon">
-      <div class="section-title"><span class="icon">🚀</span> 미래 전망</div>
+      <div class="section-title"><span class="icon">Future Horizon</span></div>
       <div class="section-desc">{{HORIZON_INTRO}}</div>
 
 {{#EACH_HORIZON}}

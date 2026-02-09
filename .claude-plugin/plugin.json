@@ -1,5 +1,5 @@
 {
-  "name": "insights-ko",
-  "version": "1.0.0",
-  "description": "Claude Code Insights 리포트를 한글 다크모드 대시보드로 변환합니다."
+  "name": "insights-ui",
+  "version": "2.0.0",
+  "description": "Transform Claude Code Insights report into a dark-mode dashboard (English / Korean)"
 }
