@@ -6,11 +6,11 @@
 
 ## Dashboard
 
-![Dashboard Preview](https://i.imgur.com/Oy2Pv5A.png)
+![Dashboard Preview](https://i.imgur.com/P71qZ7S.png)
 
 ## Video
 
-![Demo Video](https://i.imgur.com/C9n5Ozm.gif)
+![Demo Video](https://i.imgur.com/Jxj49Gd.gif)
 
 ## Features
 
