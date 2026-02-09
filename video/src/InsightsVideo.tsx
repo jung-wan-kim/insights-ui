@@ -629,13 +629,13 @@ export const InsightsVideo: React.FC<InsightsData> = (props) => {
   }
 
   const scenes = [
-    { from: 0, duration: 120, Component: TitleScene },
-    { from: 120, duration: 150, Component: StatsScene },
-    { from: 270, duration: 180, Component: ToolsScene },
-    { from: 450, duration: 150, Component: LanguagesScene },
-    { from: 600, duration: 120, Component: WinsScene },
-    { from: 720, duration: 90, Component: InsightScene },
-    { from: 810, duration: 90, Component: EndingScene },
+    { from: 0, duration: 84, Component: TitleScene },
+    { from: 84, duration: 105, Component: StatsScene },
+    { from: 189, duration: 126, Component: ToolsScene },
+    { from: 315, duration: 105, Component: LanguagesScene },
+    { from: 420, duration: 84, Component: WinsScene },
+    { from: 504, duration: 63, Component: InsightScene },
+    { from: 567, duration: 63, Component: EndingScene },
   ];
 
   return (
