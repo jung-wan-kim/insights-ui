@@ -1,0 +1,20 @@
+{
+  "name": "claude-code-insights-ko",
+  "version": "1.0.0",
+  "description": "Claude Code Insights 리포트를 한글 다크모드 대시보드로 변환하는 플러그인",
+  "main": "scripts/transform-report.js",
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "insights",
+    "korean",
+    "dark-mode",
+    "dashboard"
+  ],
+  "author": "jung-wan-kim",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jung-wan-kim/claude-code-insights-ko.git"
+  }
+}
