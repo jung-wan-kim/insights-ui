@@ -10,9 +10,9 @@
 
 ## 영상
 
-<video src="https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4" width="100%" autoplay muted loop></video>
+[![데모 영상 보기](docs/video-thumbnail.png)](https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4)
 
-https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4
+> 위 이미지를 클릭하면 데모 영상을 다운로드하여 재생할 수 있습니다
 
 ## 주요 기능
 

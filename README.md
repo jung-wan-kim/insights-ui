@@ -10,9 +10,9 @@
 
 ## Video
 
-<video src="https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4" width="100%" autoplay muted loop></video>
+[![Watch Demo Video](docs/video-thumbnail.png)](https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4)
 
-https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4
+> Click the image above to download and play the demo video
 
 ## Features
 
