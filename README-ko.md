@@ -10,9 +10,7 @@
 
 ## 영상
 
-[![데모 영상 보기](docs/video-thumbnail.png)](https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4)
-
-> 위 이미지를 클릭하면 데모 영상을 다운로드하여 재생할 수 있습니다
+![데모 영상](docs/demo-video.gif)
 
 ## 주요 기능
 

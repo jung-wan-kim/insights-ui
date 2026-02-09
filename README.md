@@ -10,9 +10,7 @@
 
 ## Video
 
-[![Watch Demo Video](docs/video-thumbnail.png)](https://github.com/jung-wan-kim/insights-ui/raw/main/docs/demo-video.mp4)
-
-> Click the image above to download and play the demo video
+![Demo Video](docs/demo-video.gif)
 
 ## Features
 
